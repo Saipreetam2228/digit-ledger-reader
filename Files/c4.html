@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ScanSheet Pro — Enhanced Vision Pipeline v7.4</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght=400;600;700;800&family=DM+Mono:wght=300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0d0d; --surface: #141414; --border: #222;
+    --accent: #f0c040; --accent2: #e05a2b; --text: #f0f0e8;
+    --muted: #555; --success: #5fcf7a; --card: #161616; --row-alt: #1a1a1a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace; min-height:100vh; padding-bottom: 40px; }
+  body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='0.4' fill='rgba(255,255,255,0.015)'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; }
+  
+  .container { max-width:1000px; margin:0 auto; padding:32px 16px 60px; position:relative; z-index:1; }
+  .header { margin-bottom:32px; }
+  .tag { display:inline-flex; align-items:center; gap:6px; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
+  .tag-dot { width:6px; height:6px; background:var(--accent); border-radius:50%; }
+  h1 { font-family:'Syne',sans-serif; font-size:clamp(2rem, 8vw, 3.8rem); font-weight:800; letter-spacing:-2px; line-height:0.95; color:var(--text); }
+  h1 em { font-style:normal; color:var(--accent); }
+  .subtitle { margin-top:12px; color:var(--muted); font-size:11px; line-height:1.6; }
+  
+  .date-container { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 4px; margin-bottom: 16px; }
+  .field-group { display: flex; flex-direction: column; gap: 8px; width: 100%; position: relative; }
+  .date-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; padding: 16px; font-size: 14px; border-radius: 4px; outline: none; transition: border-color 0.2s; width: 100%; -webkit-appearance: none; min-height: 50px; cursor: pointer; display: block; }
+  
+  .apikey-section { margin-bottom:16px; }
+  .apikey-label { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; display:block; }
+  .apikey-row { display:flex; gap:8px; }
+  .apikey-input { flex:1; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:13px; padding:12px; border-radius:4px; outline:none; }
+  .apikey-input.saved { border-color:rgba(95,207,122,0.4); }
+  .btn-save-key { font-family:'DM Mono',monospace; font-size:12px; background:none; border:1px solid var(--border); color:var(--muted); padding:12px 14px; cursor:pointer; border-radius:4px; white-space:nowrap; }
+
+  .input-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .mode-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 16px 12px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; text-align: center; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .mode-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(240,192,64,0.02); }
+
+  .camera-container { display: none; background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 4px; margin-bottom: 16px; text-align: center; }
+  #video { width: 100%; height: auto; max-height: 360px; background: #000; object-fit: cover; border: 1px solid var(--border); margin-bottom: 12px; border-radius: 4px; }
+  .camera-controls { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  
+  .btn-cam { font-family: 'DM Mono', monospace; font-size: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 14px; cursor: pointer; border-radius: 4px; width: 100%; text-align: center; }
+  .btn-cam.add-photo { background: transparent; border-color: var(--accent); color: var(--accent); font-weight: bold; }
+  .btn-cam.confirm-batch { background: var(--success); color: #000; font-weight: bold; border: none; display: none; }
+
+  .queue-badge-container { margin-top: 12px; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+  .queue-pill { background: rgba(255,255,255,0.03); border: 1px solid var(--border); font-size: 9px; padding: 6px 10px; border-radius: 20px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .queue-pill.active { color: var(--accent); border-color: rgba(240,192,64,0.3); }
+  
+  .upload-zone { border:1px dashed var(--border); border-radius:4px; padding:32px 16px; text-align:center; cursor:pointer; background:var(--card); display: none; }
+  .upload-title { font-size: 12px; line-height: 1.5; color: var(--text); }
+  #file-input, #camera-fallback-input { display:none; }
+  
+  .scan-btn { width:100%; margin-top:16px; padding:16px; font-family:'Syne',sans-serif; font-size:13px; font-weight:800; letter-spacing:1px; text-transform:uppercase; background:var(--accent); color:#000; border:none; cursor:pointer; display:none; border-radius:4px; }
+  .scan-btn.show { display:block; }
+  .scan-btn:disabled { opacity:0.4; }
+
+  .progress-wrap { margin-top:16px; display:none; }
+  .progress-wrap.show { display:block; }
+  .progress-info { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:11px; }
+  .progress-bar-bg { height:4px; background:var(--border); overflow:hidden; border-radius:2px; }
+  .progress-bar { height:100%; background:var(--accent); width:0%; transition:width 0.3s; }
+  .progress-status { margin-top:8px; font-size:11px; color:var(--muted); min-height:16px; line-height:1.4; }
+  
+  .error-box { margin-top:16px; padding:12px; background:rgba(224,90,43,0.07); border:1px solid rgba(224,90,43,0.25); color:var(--accent2); font-size:12px; display:none; border-radius:4px; }
+  .error-box.show { display:block; }
+
+  .results-section { margin-top:24px; display:none; }
+  .results-section.show { display:block; }
+  
+  .output-date-banner { background: rgba(240,192,64,0.04); border: 1px dashed rgba(240,192,64,0.25); border-radius: 4px; padding: 12px; margin-bottom: 16px; }
+  .output-date-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 2px; }
+  .output-date-value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); }
+
+  .results-bar { display:flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .results-actions { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
+  .btn-action { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:14px; cursor:pointer; border-radius:4px; background:transparent; color:var(--text); border:1px solid var(--border); text-align: center; }
+  .btn-merge { background: var(--accent); color: #000; border: none; font-weight: 800; }
+  .btn-download { border-color:var(--success); color:var(--success); background: rgba(95,207,122,0.02); }
+  
+  .table-scroll { overflow-x:auto; border:1px solid var(--border); border-radius:4px; background: var(--card); }
+  table { width:100%; border-collapse:collapse; font-size:13px; min-width: 500px; }
+  thead th { background:rgba(240,192,64,0.05); color:var(--accent); font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:12px; text-align:left; border-bottom:1px solid var(--border); }
+  thead tr.sub-hd th { background: rgba(255,255,255,0.02); color: var(--muted); font-size: 10px; padding: 8px 12px; }
+  tbody tr { border-bottom:1px solid rgba(34,34,34,0.7); }
+  tbody tr:nth-child(even) { background:var(--row-alt); }
+  tbody td { padding:12px; color:var(--text); }
+  .col-divider { border-right: 1px solid var(--border); }
+  td[contenteditable="true"] { outline:none; background: rgba(255,255,255,0.01); border-radius: 2px; }
+  td[contenteditable="true"]:focus { background:rgba(240,192,64,0.12); box-shadow: inset 0 0 0 1px var(--accent); }
+  .footer { margin-top:48px; font-size:10px; color:#333; text-align:center; }
+
+  @media(min-width: 600px) {
+    .container { padding: 48px 24px; }
+    .input-options { gap: 16px; }
+    .mode-btn { padding: 20px; font-size: 14px; flex-direction: row; }
+    .camera-controls { grid-template-columns: auto auto auto; justify-content: center; }
+    .btn-cam { width: auto; padding: 12px 20px; }
+    .results-bar { flex-direction: row; align-items: center; justify-content: space-between; }
+    .results-actions { grid-template-columns: auto auto; width: auto; }
+    .btn-action { width: auto; padding: 10px 18px; }
+    table { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="tag"><span class="tag-dot"></span> Pipeline v7.4 · Precision Vision</div>
+    <h1>Scan<em>Sheet</em> Pro</h1>
+    <p class="subtitle">High-accuracy handwriting transcription powered by specialized Llama 3.2 Vision layers.</p>
+  </div>
+  
+  <div class="date-container">
+    <div class="field-group">
+      <label class="apikey-label" style="margin-bottom:0;">🗓️ Target Ledger Date Record Anchor</label>
+      <input type="date" class="date-input" id="ledger-date-input">
+    </div>
+  </div>
+
+  <div class="apikey-section">
+    <span class="apikey-label">⚡ Groq API Key</span>
+    <div class="apikey-row">
+      <input type="password" class="apikey-input" id="apikey-input" placeholder="Paste your Groq gsk_ API key here">
+      <button class="btn-save-key" id="save-key-btn">Save</button>
+    </div>
+  </div>
+
+  <div class="input-options">
+    <button class="mode-btn" id="use-camera-btn">📷 Camera Native/Fallback</button>
+    <button class="mode-btn" id="use-upload-btn">📁 Upload Files</button>
+  </div>
+
+  <input type="file" id="camera-fallback-input" accept="image/*,image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif" capture="environment">
+
+  <div class="camera-container" id="camera-workspace">
+    <video id="video" autoplay playsinline muted></video>
+    <div class="camera-controls">
+      <button class="btn-cam add-photo" id="capture-add-btn">➕ Capture Line Frame</button>
+      <button class="btn-cam confirm-batch" id="capture-confirm-btn">🔒 Confirm Batch</button>
+      <button class="btn-cam" id="close-camera-btn" style="border-color: var(--accent2); color: var(--accent2);">Stop</button>
+    </div>
+    <div class="queue-badge-container" id="queue-badge-container"></div>
+  </div>
+
+  <div class="upload-zone" id="drop-zone">
+    <input type="file" id="file-input" accept="image/*,image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif" multiple>
+    <div class="upload-title" id="upload-zone-title">Tap to select or drop your ledger images here</div>
+  </div>
+
+  <button class="scan-btn" id="scan-btn">⚡ Process Document Frame Arrays</button>
+
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-info"><span id="prog-status">Ready...</span><span id="pct-text">0%</span></div>
+    <div class="progress-bar-bg"><div class="progress-bar" id="prog-bar"></div></div>
+  </div>
+
+  <div class="error-box" id="error-box"></div>
+
+  <div class="results-section" id="results-section">
+    <div class="output-date-banner">
+      <div class="output-date-label">Ledger Processing Date Record Anchor</div>
+      <div class="output-date-value" id="output-date-anchor">NOT ASSIGNED</div>
+    </div>
+
+    <div class="results-bar">
+      <span id="results-count" style="color:var(--text); font-size:12px;">0 items mapped</span>
+      <div class="results-actions">
+        <button class="btn-action btn-merge" id="merge-sort-btn">🌪️ Merge & Sort (No. Ascending)</button>
+        <button class="btn-action btn-download" id="download-btn">⬇ Export Master .xlsx</button>
+        <button class="btn-action" id="new-scan-btn" style="border-color:var(--accent2);color:var(--accent2);">🔄 New Scan</button>
+      </div>
+    </div>
+    <div class="table-scroll" id="table-scroll-container"></div>
+  </div>
+
+  <div class="footer">ScanSheet v7.4 · Vision Fix Complete</div>
+</div>
+
+<script>
+let stream = null;
+let imageStagingBatch = []; 
+let viewMode = 'parallel';
+let dualTrackRows = [];   
+let mergedRows = [];      
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const cameraFallbackInput = document.getElementById('camera-fallback-input');
+const uploadZoneTitle = document.getElementById('upload-zone-title');
+const useCameraBtn = document.getElementById('use-camera-btn');
+const useUploadBtn = document.getElementById('use-upload-btn');
+const cameraWorkspace = document.getElementById('camera-workspace');
+const video = document.getElementById('video');
+const captureAddBtn = document.getElementById('capture-add-btn');
+const captureConfirmBtn = document.getElementById('capture-confirm-btn');
+const closeCameraBtn = document.getElementById('close-camera-btn');
+const scanBtn = document.getElementById('scan-btn');
+const progWrap = document.getElementById('progress-wrap');
+const progBar = document.getElementById('prog-bar');
+const pctText = document.getElementById('pct-text');
+const progStatus = document.getElementById('prog-status');
+const errorBox = document.getElementById('error-box');
+const resultsSec = document.getElementById('results-section');
+const resultsCount = document.getElementById('results-count');
+const tableScrollContainer = document.getElementById('table-scroll-container');
+const mergeSortBtn = document.getElementById('merge-sort-btn');
+const apikeyInput = document.getElementById('apikey-input');
+const saveKeyBtn = document.getElementById('save-key-btn');
+const ledgerDateInput = document.getElementById('ledger-date-input');
+const outputDateAnchor = document.getElementById('output-date-anchor');
+const queueBadgeContainer = document.getElementById('queue-badge-container');
+
+ledgerDateInput.value = new Date().toISOString().split('T')[0];
+
+const STORAGE_KEY = 'scansheet_groq_key';
+if (localStorage.getItem(STORAGE_KEY)) {
+  apikeyInput.value = localStorage.getItem(STORAGE_KEY);
+  apikeyInput.classList.add('saved');
+}
+saveKeyBtn.addEventListener('click', () => {
+  const k = apikeyInput.value.trim();
+  if (k) { localStorage.setItem(STORAGE_KEY, k); apikeyInput.classList.add('saved'); }
+  else { localStorage.removeItem(STORAGE_KEY); apikeyInput.classList.remove('saved'); }
+});
+
+useUploadBtn.addEventListener('click', () => { stopCamera(); dropZone.style.display = 'block'; cameraWorkspace.style.display = 'none'; hideError(); });
+useCameraBtn.addEventListener('click', async () => {
+  dropZone.style.display = 'none'; hideError();
+  // Safe mobile/webview detection fallback path to bypass camera failures
+  if (/FBAN|FBAV|Instagram|Twitter|WebView|InApp|WhatsApp/i.test(navigator.userAgent) || !navigator.mediaDevices) { 
+    cameraFallbackInput.click(); 
+  } else { 
+    await startCamera(); 
+  }
+});
+
+cameraFallbackInput.addEventListener('change', (e) => { if(e.target.files.length) handleFileBatch(e.target.files); });
+
+async function startCamera() {
+  try {
+    if(stream) stopCamera();
+    setProgress(null, "Initializing lens pipeline...");
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+    video.srcObject = stream; video.setAttribute('playsinline', true); await video.play();
+    cameraWorkspace.style.display = 'block'; updateQueueDisplay(); hideError();
+  } catch (err) { cameraFallbackInput.click(); }
+}
+
+function stopCamera() { if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } video.srcObject = null; }
+closeCameraBtn.addEventListener('click', () => { stopCamera(); cameraWorkspace.style.display = 'none'; });
+captureConfirmBtn.addEventListener('click', () => {
+  stopCamera();
+  cameraWorkspace.style.display = 'none';
+  if (imageStagingBatch.length > 0) {
+    scanBtn.classList.add('show');
+    setTimeout(() => scanBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+  }
+});
+
+captureAddBtn.addEventListener('click', () => {
+  if (!stream || video.paused || video.ended) return;
+  const canvas = document.createElement('canvas'); canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 960;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  imageStagingBatch.push({ dataUrl: canvas.toDataURL('image/jpeg', 0.92) });
+  updateQueueDisplay();
+});
+
+function updateQueueDisplay() {
+  const cnt = imageStagingBatch.length;
+  captureConfirmBtn.textContent = `🔒 Process Batch (${cnt})`;
+  captureConfirmBtn.style.display = cnt > 0 ? 'inline-block' : 'none';
+  queueBadgeContainer.innerHTML = imageStagingBatch.map((img, i) => `<div class="queue-pill active">Frame #${i+1} Ready</div>`).join('');
+  if (cnt > 0) scanBtn.classList.add('show');
+}
+
+dropZone.addEventListener('dragover', e => e.preventDefault());
+dropZone.addEventListener('drop', e => { e.preventDefault(); if(e.dataTransfer.files.length) handleFileBatch(e.dataTransfer.files); });
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => { if(e.target.files.length) handleFileBatch(e.target.files); });
+
+function handleFileBatch(files) {
+  let filesProcessed = 0;
+  const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif|bmp|gif)$/i.test(f.name));
+  if (imageFiles.length === 0) { showError("No valid image files selected. Please choose JPG/PNG images."); return; }
+
+  imageFiles.forEach(file => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1600 / Math.max(img.width, img.height), 1);
+      canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(objectUrl);
+      imageStagingBatch.push({ dataUrl: canvas.toDataURL('image/jpeg', 0.95) });
+      filesProcessed++;
+      if(filesProcessed === imageFiles.length) {
+        scanBtn.classList.add('show');
+        uploadZoneTitle.textContent = `✅ ${imageStagingBatch.length} ledger frame${imageStagingBatch.length > 1 ? 's' : ''} staged and ready.`;
+        updateQueueDisplay();
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      filesProcessed++;
+      showError(`Could not read image: ${file.name}`);
+    };
+    img.src = objectUrl;
+  });
+}
+
+function showError(msg) { errorBox.textContent = '⚠ ' + msg; errorBox.classList.add('show'); }
+function hideError() { errorBox.classList.remove('show'); }
+function setProgress(pct, msg) { if(pct!==null) progBar.style.width = pct + '%'; if(pct!==null) pctText.textContent = pct + '%'; if(msg) progStatus.textContent = msg; }
+
+function extractHalfPage(sourceDataUrl, side) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.width, h = img.height;
+      // Use overlapping crops instead of a razor-edge 50/50 split: the paper strip
+      // is creased/uneven, so the true center divider wobbles left/right down the
+      // page. Left covers 0-58% of width, Right covers 42-100%, giving a 16%-wide
+      // overlap zone in the middle so neither side ever loses a column to clipping.
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      let sx, cropW;
+      if (side === 'left') {
+        sx = 0;
+        cropW = Math.max(1, Math.round(w * 0.58));
+      } else {
+        sx = Math.round(w * 0.42);
+        cropW = w - sx;
+      }
+      canvas.width = cropW; canvas.height = h;
+      ctx.drawImage(img, sx, 0, cropW, h, 0, 0, cropW, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.95));
+    };
+    img.onerror = () => reject(new Error('Image load failed during half-page extraction'));
+    img.src = sourceDataUrl;
+  });
+}
+
+function extractImageRegion(sourceDataUrl, yStartFrac, yEndFrac) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.width, h = img.height;
+      const yStart = Math.max(0, Math.min(h - 1, Math.floor(h * yStartFrac)));
+      const yEnd = Math.max(yStart + 1, Math.min(h, Math.ceil(h * yEndFrac)));
+      const cropH = yEnd - yStart;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = cropH;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, yStart, w, cropH, 0, 0, w, cropH);
+      resolve(canvas.toDataURL('image/jpeg', 0.95));
+    };
+    img.onerror = () => reject(new Error('Image load failed during row-chunk extraction'));
+    img.src = sourceDataUrl;
+  });
+}
+
+async function callGroqVision(base64DataUrl, promptText, groqKey, retriesLeft = 2) {
+  const base64Segment = base64DataUrl.split(',')[1];
+
+  let response;
+  try {
+    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-scout-17b-16e-instruct", // Vision-capable model with JSON support
+        temperature: 0.0,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: promptText },
+              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Segment}` } }
+            ]
+          }
+        ]
+      })
+    });
+  } catch (networkErr) {
+    if (retriesLeft > 0) {
+      await new Promise(r => setTimeout(r, 1000));
+      return callGroqVision(base64DataUrl, promptText, groqKey, retriesLeft - 1);
+    }
+    throw new Error(`Network error contacting Groq: ${networkErr.message}`);
+  }
+
+  if (!response.ok) {
+    // Auto-retry on rate-limit / transient server errors before giving up.
+    if ((response.status === 429 || response.status >= 500) && retriesLeft > 0) {
+      await new Promise(r => setTimeout(r, 1200));
+      return callGroqVision(base64DataUrl, promptText, groqKey, retriesLeft - 1);
+    }
+    const errBody = await response.json().catch(() => ({}));
+    const errMsg = errBody?.error?.message || `HTTP ${response.status}`;
+    throw new Error(`Groq API Error: ${errMsg}`);
+  }
+  const data = await response.json();
+  const rawContent = data.choices?.[0]?.message?.content?.trim() || '';
+
+  // Robustly strip markdown fences if present
+  const cleaned = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+
+  let resObj;
+  try {
+    resObj = JSON.parse(cleaned);
+  } catch (e) {
+    // Try to extract a JSON object from the string if full parse fails
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { resObj = JSON.parse(match[0]); } catch { resObj = { entries: [] }; }
+    } else {
+      resObj = { entries: [] };
+    }
+  }
+  // Normalize: model may return {entries:[{no,rs}]} or {entries:[{No,Rs}]} etc.
+  const raw = resObj.entries || resObj.data || resObj.rows || resObj.items || [];
+  return raw.map(item => ({
+    row: parseInt(item.row ?? item.Row ?? item.index ?? item.line ?? item.serial ?? '', 10) || null,
+    no: String(item.no ?? item.No ?? item.number ?? item.Number ?? '').trim(),
+    rs: String(item.rs ?? item.Rs ?? item.amount ?? item.Amount ?? item.rupees ?? '').trim()
+  }));
+}
+
+async function requestGroqColumnAnalysis(base64DataUrl, side, groqKey) {
+  const sideLabel = side.toUpperCase();
+  const outerEdge = side === 'left' ? 'LEFT' : 'RIGHT';
+  const prompt = `You are an accurate data entry assistant transcribing a hand-ruled ledger GRID. This image is the ${sideLabel} portion of the ledger page, deliberately cropped with EXTRA WIDTH so it overlaps slightly with the other half — meaning this crop may show 5 or 6 columns total instead of just 2. The page is drawn as a strict grid: vertical ruled lines separate 'No.' columns from 'Rs.' columns, and horizontal ruled lines separate each row from the next. Every handwritten value lives inside exactly ONE rectangular grid cell, fully bounded by these ruled lines on all four sides.
+
+              IMPORTANT — WHICH COLUMNS TO READ: Only transcribe the ONE 'No.'/'Rs.' column-PAIR that is closest to the ${outerEdge} outer edge of this image (the edge nearest the page's physical margin). If you see additional 'No.'/'Rs.' column-pairs further toward the opposite edge (from the overlap with the other half), COMPLETELY IGNORE them — do not transcribe those, even partially.
+
+              'No.' = a numeric tracking/reference index number. 'Rs.' = a monetary amount. The number of digits and leading digit(s) vary between ledger sheets — never assume a fixed pattern, length, or leading digit. Process row by row downward, starting with the first ruled row directly below the column headers as row 1.
+
+              CRITICAL GRID-READING RULES:
+              1. Read ONLY the digits whose strokes sit primarily INSIDE one cell's four ruled boundary lines. NEVER concatenate digits from two different cells (e.g. a digit belonging to the row above/below, or to a neighboring column) into a single value. If combining digits would make a number unusually long compared to the other values in that same column, that is a strong signal you've merged two cells — split them apart.
+              2. Transcribe exactly the digits visible inside each cell — do not add, drop, pad, truncate, or "borrow" digits from a neighboring cell.
+              3. If a stroke sits right on a ruled boundary line, decide which single cell it belongs to based on which side contains most of the stroke's shape — like a careful human checking their own work. Use the typical digit-count of that column (compared with neighboring rows) only as a tie-breaker for a genuinely ambiguous stroke, never as a reason to invent digits that aren't there.
+              4. Ignore faint ink bleed-through lines showing from the back side of the paper page. Only capture clear primary text written on the front.
+              5. IGNORE anything written outside the ruled grid (margins, page edges, stray notes, fold lines). IGNORE the final summary/total row at the very bottom of the table — it contains only a single large grand-total number (often underlined) and does NOT have the same paired No./Rs. cell structure as the rows above it.
+              6. For every entry, include a "row" field containing the 1-based row number, counted strictly by the horizontal ruled lines from the top of the table (row 1 = first data row, row 2 = second data row, etc.). This row number must match the physical row position so it can be cross-referenced with the other half of the page. Do not skip, merge, or re-number rows.
+              7. Return ONLY a valid JSON object with a root key "entries" containing an array of objects structured as: {"row": <row number>, "no": "Transcribed No", "rs": "Transcribed Rs"}. No markdown, no extra text.`;
+  return callGroqVision(base64DataUrl, prompt, groqKey);
+}
+
+async function requestGroqRowChunkAnalysis(base64DataUrl, side, startRow, endRow, groqKey) {
+  const sideLabel = side.toUpperCase();
+  const outerEdge = side === 'left' ? 'LEFT' : 'RIGHT';
+  const prompt = `You are acting as a digit-by-digit handwriting verification system, similar to a digit-recognition model trained on isolated handwritten digits (like MNIST), but applied here to a small cropped strip of a hand-ruled ledger GRID. This image is a tightly cropped vertical strip from the ${sideLabel} portion of a handwritten ledger page (deliberately cropped with extra width, so it may show extra columns from the overlap with the other half), showing roughly rows ${startRow} to ${endRow} of the table (row 1 = first data row of the full table). Each row is one horizontal grid cell-pair: a 'No.' cell (numeric tracking/reference number) and a 'Rs.' cell (monetary amount), separated by ruled lines.
+
+              IMPORTANT — WHICH COLUMNS TO READ: Only transcribe the ONE 'No.'/'Rs.' column-PAIR that is closest to the ${outerEdge} outer edge of this image. If extra 'No.'/'Rs.' columns are visible toward the opposite edge (from the overlap), COMPLETELY IGNORE them.
+
+              CRITICAL INSTRUCTIONS:
+              1. Examine EACH DIGIT of each number individually — look at the stroke shape of that single digit in isolation before deciding what it is. Do not pattern-match against other rows or assume a digit just because nearby rows have a similar-looking number.
+              2. Read ONLY the digits inside a row's own ruled cell. If a stroke from the row above or below spills slightly into this row's cell, decide which row it truly belongs to by which side of the ruled line contains most of the stroke. NEVER merge a trailing digit from one row's value into the next row's value or vice versa — if a transcribed number looks unusually long compared to the other numbers you're reading in this same crop, you have likely merged two cells; split them back apart.
+              3. Transcribe ONLY the digits actually visible, exactly as written. Do not add, remove, or pad any leading or trailing digit.
+              4. Ignore faint ink bleed-through from the back of the page; only transcribe the dark, primary handwriting on the front of this crop.
+              5. This crop may include a sliver of a row above or below the intended range, or a row may be cut off at the very top/bottom edge. If a row is not fully visible (its number is cut off), OMIT it entirely rather than guessing.
+              6. For every entry you DO include, set "row" to its row number from the full table (it should be between ${startRow - 1} and ${endRow + 1}, but only include rows whose numbers are completely visible and confidently readable).
+              7. Return ONLY a valid JSON object: {"entries": [{"row": <row number>, "no": "Transcribed No", "rs": "Transcribed Rs"}]}. No markdown, no extra text.`;
+  return callGroqVision(base64DataUrl, prompt, groqKey);
+}
+
+// Second-pass digit verification: re-reads the same half-page in small row-chunks
+// (much higher resolution per digit) and overrides the first-pass values for any
+// row that the verification pass can confidently read.
+async function refineSideWithDigitVerification(halfImgUrl, side, baseMap, maxRow, groqKey, onChunkProgress) {
+  const refinedMap = new Map(baseMap);
+  if (maxRow <= 0) return refinedMap;
+
+  const CHUNK_ROWS = 5;
+  const numChunks = Math.max(1, Math.ceil(maxRow / CHUNK_ROWS));
+
+  for (let c = 0; c < numChunks; c++) {
+    const startRow = c * CHUNK_ROWS + 1;
+    const endRow = Math.min(maxRow, (c + 1) * CHUNK_ROWS);
+    // Pad the crop with a sliver of the neighboring row above/below for context,
+    // since the model is told to discard partially-visible edge rows anyway.
+    const padStartRow = Math.max(1, startRow - 1);
+    const padEndRow = Math.min(maxRow, endRow + 1);
+    const yStartFrac = (padStartRow - 1) / maxRow;
+    const yEndFrac = padEndRow / maxRow;
+
+    if (onChunkProgress) onChunkProgress(c, numChunks);
+
+    try {
+      const chunkUrl = await extractImageRegion(halfImgUrl, yStartFrac, yEndFrac);
+      const chunkEntries = await requestGroqRowChunkAnalysis(chunkUrl, side, startRow, endRow, groqKey);
+      chunkEntries.forEach(item => {
+        if (item.row && item.row >= 1 && item.row <= maxRow && (item.no || item.rs)) {
+          refinedMap.set(item.row, item);
+        }
+      });
+    } catch (e) {
+      // If a chunk fails (network hiccup etc.), keep the first-pass values for those rows.
+    }
+  }
+  return refinedMap;
+}
+
+scanBtn.addEventListener('click', async () => {
+  const groqKey = apikeyInput.value.trim() || localStorage.getItem(STORAGE_KEY) || '';
+  if(!groqKey) return showError("Please input an authorized Groq Cloud API Key.");
+  if(!ledgerDateInput.value) return showError("Please select a valid tracking date record anchor.");
+  if(imageStagingBatch.length === 0) return showError("No images staged. Please upload or capture ledger images first.");
+  
+  scanBtn.disabled = true; hideError(); resultsSec.classList.remove('show'); progWrap.classList.add('show');
+
+  try {
+    dualTrackRows = []; mergedRows = []; viewMode = 'parallel';
+    const totalPages = imageStagingBatch.length;
+    const pageShare = 100 / totalPages;
+    
+    for(let i=0; i<totalPages; i++) {
+      const stepBase = i * pageShare;
+      
+      // Pass 1: full-half read to establish row structure and a baseline transcription
+      setProgress(Math.min(99, Math.round(stepBase + pageShare * 0.05)), `[Page ${i+1}/${totalPages}] Pass 1/2: Reading Left columns...`);
+      const leftImgUrl = await extractHalfPage(imageStagingBatch[i].dataUrl, 'left');
+      const leftEntries = await requestGroqColumnAnalysis(leftImgUrl, 'left', groqKey);
+      
+      setProgress(Math.min(99, Math.round(stepBase + pageShare * 0.15)), `[Page ${i+1}/${totalPages}] Pass 1/2: Reading Right columns...`);
+      const rightImgUrl = await extractHalfPage(imageStagingBatch[i].dataUrl, 'right');
+      const rightEntries = await requestGroqColumnAnalysis(rightImgUrl, 'right', groqKey);
+      
+      const maxRows = Math.max(
+        leftEntries.reduce((m, it, idx) => Math.max(m, (it.row && it.row > 0) ? it.row : idx + 1), 0),
+        rightEntries.reduce((m, it, idx) => Math.max(m, (it.row && it.row > 0) ? it.row : idx + 1), 0)
+      );
+      const leftMap = new Map();
+      leftEntries.forEach((item, idx) => { const r = (item.row && item.row > 0) ? item.row : (idx + 1); if (!leftMap.has(r)) leftMap.set(r, item); });
+      const rightMap = new Map();
+      rightEntries.forEach((item, idx) => { const r = (item.row && item.row > 0) ? item.row : (idx + 1); if (!rightMap.has(r)) rightMap.set(r, item); });
+
+      // Pass 2: digit-by-digit verification on small row-chunks (high resolution per digit)
+      const refinedLeftMap = await refineSideWithDigitVerification(leftImgUrl, 'left', leftMap, maxRows, groqKey, (c, n) => {
+        setProgress(Math.min(99, Math.round(stepBase + pageShare * (0.20 + 0.35 * (c + 1) / n))), `[Page ${i+1}/${totalPages}] Pass 2/2: Verifying Left digits (chunk ${c+1}/${n})...`);
+      });
+      const refinedRightMap = await refineSideWithDigitVerification(rightImgUrl, 'right', rightMap, maxRows, groqKey, (c, n) => {
+        setProgress(Math.min(99, Math.round(stepBase + pageShare * (0.55 + 0.40 * (c + 1) / n))), `[Page ${i+1}/${totalPages}] Pass 2/2: Verifying Right digits (chunk ${c+1}/${n})...`);
+      });
+
+      for(let r=1; r<=maxRows; r++) {
+        const lItem = refinedLeftMap.get(r) || { no: '', rs: '' };
+        const rItem = refinedRightMap.get(r) || { no: '', rs: '' };
+        dualTrackRows.push({
+          leftNo: lItem.no, leftRs: lItem.rs,
+          rightNo: rItem.no, rightRs: rItem.rs
+        });
+      }
+    }
+
+    // Fix date: parse as local date, not UTC, to avoid off-by-one timezone issue
+    const [yyyy, mm, dd] = ledgerDateInput.value.split('-').map(Number);
+    const localDate = new Date(yyyy, mm - 1, dd);
+    outputDateAnchor.textContent = localDate.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+    viewMode = 'parallel'; setProgress(100, "Processing finalized."); renderDataView();
+    setTimeout(() => { progWrap.classList.remove('show'); resultsSec.classList.add('show'); }, 400);
+  } catch (err) {
+    progWrap.classList.remove('show'); showError("Matrix Execution Exception: " + err.message);
+  } finally { scanBtn.disabled = false; }
+});
+
+function renderDataView() {
+  if (viewMode === 'parallel') {
+    resultsCount.textContent = `${dualTrackRows.length} Ledger Rows Found`;
+    mergeSortBtn.style.display = 'block';
+    tableScrollContainer.innerHTML = `
+      <table>
+        <thead>
+          <tr><th colspan="3" class="col-divider" style="text-align: center; background: rgba(240,192,64,0.06);">LEFT COLUMNS</th><th colspan="2" style="text-align: center; background: rgba(240,192,64,0.06);">RIGHT COLUMNS</th></tr>
+          <tr class="sub-hd"><th style="width:50px;">Idx</th><th>No.</th><th class="col-divider">Rs.</th><th>No.</th><th>Rs.</th></tr>
+        </thead>
+        <tbody>
+          ${dualTrackRows.map((row, idx) => `
+            <tr>
+              <td>${idx + 1}</td>
+              <td contenteditable="true" class="cell-data" data-idx="${idx}" data-field="leftNo">${row.leftNo || ''}</td>
+              <td contenteditable="true" class="cell-data col-divider" data-idx="${idx}" data-field="leftRs">${row.leftRs || ''}</td>
+              <td contenteditable="true" class="cell-data" data-idx="${idx}" data-field="rightNo">${row.rightNo || ''}</td>
+              <td contenteditable="true" class="cell-data" data-idx="${idx}" data-field="rightRs">${row.rightRs || ''}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+    tableScrollContainer.querySelectorAll('.cell-data').forEach(cell => {
+      cell.addEventListener('input', e => {
+        dualTrackRows[e.target.getAttribute('data-idx')][e.target.getAttribute('data-field')] = e.target.textContent.trim();
+      });
+    });
+  } else {
+    resultsCount.textContent = `${mergedRows.length} Items Consolidated (Sorted)`;
+    mergeSortBtn.style.display = 'none';
+    tableScrollContainer.innerHTML = `
+      <table>
+        <thead><tr><th style="width:60px;">Idx</th><th>No.</th><th>Rs.</th></tr></thead>
+        <tbody>
+          ${mergedRows.map((row, idx) => `<tr><td>${idx + 1}</td><td contenteditable="true" class="cell-data" data-idx="${idx}" data-field="number">${row.number || ''}</td><td contenteditable="true" class="cell-data" data-idx="${idx}" data-field="rupees">${row.rupees || ''}</td></tr>`).join('')}
+        </tbody>
+      </table>`;
+    tableScrollContainer.querySelectorAll('.cell-data').forEach(cell => {
+      cell.addEventListener('input', e => {
+        mergedRows[e.target.getAttribute('data-idx')][e.target.getAttribute('data-field')] = e.target.textContent.trim();
+      });
+    });
+  }
+}
+
+mergeSortBtn.addEventListener('click', () => {
+  let pool = [];
+  dualTrackRows.forEach(r => {
+    if (r.leftNo || r.leftRs) pool.push({ number: r.leftNo, rupees: r.leftRs });
+    if (r.rightNo || r.rightRs) pool.push({ number: r.rightNo, rupees: r.rightRs });
+  });
+  pool.sort((a, b) => (parseFloat(String(a.number).replace(/[^0-9.]/g, '')) || 0) - (parseFloat(String(b.number).replace(/[^0-9.]/g, '')) || 0));
+  mergedRows = pool; viewMode = 'merged'; renderDataView();
+});
+
+document.getElementById('new-scan-btn').addEventListener('click', () => {
+  imageStagingBatch = []; dualTrackRows = []; mergedRows = []; viewMode = 'parallel';
+  resultsSec.classList.remove('show');
+  scanBtn.classList.remove('show');
+  scanBtn.disabled = false;
+  uploadZoneTitle.textContent = 'Tap to select or drop your ledger images here';
+  queueBadgeContainer.innerHTML = '';
+  hideError();
+  progWrap.classList.remove('show');
+  fileInput.value = '';
+  cameraFallbackInput.value = '';
+});
+
+document.getElementById('download-btn').addEventListener('click', () => {
+  const wb = XLSX.utils.book_new(); const dateStamp = ledgerDateInput.value || 'unassigned'; let ws;
+  if (viewMode === 'parallel') {
+    const headers = [['Date Anchor:', dateStamp, '', ''], [], ['Left No.', 'Left Rs.', 'Right No.', 'Right Rs.']];
+    ws = XLSX.utils.aoa_to_sheet(headers.concat(dualTrackRows.map(r => [r.leftNo, r.leftRs, r.rightNo, r.rightRs])));
+    XLSX.utils.book_append_sheet(wb, ws, 'Parallel Layout Batch');
+  } else {
+    const headers = [['Date Anchor:', dateStamp], [], ['No.', 'Rs.']];
+    ws = XLSX.utils.aoa_to_sheet(headers.concat(mergedRows.map(r => [r.number, r.rupees])));
+    XLSX.utils.book_append_sheet(wb, ws, 'Merged Master Track');
+  }
+  XLSX.writeFile(wb, `ledger_batch_${dateStamp}.xlsx`);
+});
+</script>
+</body>
+</html>
