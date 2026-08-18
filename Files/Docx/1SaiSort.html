@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>SaiSort — Chit Fund Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --brand: #2563EB;
+    --brand-light: #EFF6FF;
+    --brand-mid: #BFDBFE;
+    --brand-dark: #1D4ED8;
+    --surface: #FFFFFF;
+    --bg: #F5F7FA;
+    --bg2: #EEF1F6;
+    --text: #0F172A;
+    --text2: #475569;
+    --text3: #94A3B8;
+    --border: #E2E8F0;
+    --border2: #CBD5E1;
+    --success-bg: #F0FDF4;
+    --success: #16A34A;
+    --warn-bg: #FFFBEB;
+    --warn: #D97706;
+    --danger-bg: #FEF2F2;
+    --danger: #DC2626;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+  .topbar-inner {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo-area { display: flex; align-items: center; gap: 11px; }
+  .logo-mark {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, #2563EB, #7C3AED);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 20px; height: 20px; fill: none; stroke: white; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .logo-text { line-height: 1; }
+  .logo-text .name { font-family: 'DM Sans', sans-serif; font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+  .logo-text .tagline { font-size: 11px; color: var(--text3); margin-top: 2px; font-weight: 400; }
+  .session-chip {
+    font-size: 12px; font-weight: 500;
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid #BBF7D0;
+    border-radius: 20px;
+    padding: 4px 11px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .session-chip .dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+  /* ── MAIN CONTENT ── */
+  .main { max-width: 700px; margin: 0 auto; padding: 28px 20px 0; }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-section { margin-bottom: 20px; }
+  .section-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .section-eyebrow .step-pill {
+    background: var(--brand); color: white;
+    border-radius: 20px; padding: 2px 8px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .upload-btn {
+    background: var(--surface);
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 26px 16px 22px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-btn:hover { border-color: var(--brand); background: var(--brand-light); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .upload-btn:active { transform: translateY(0); }
+  .upload-btn.has-files { border-style: solid; border-color: var(--brand); background: var(--brand-light); }
+  .ub-icon {
+    width: 50px; height: 50px;
+    background: var(--bg2);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 13px;
+    transition: background 0.18s;
+  }
+  .upload-btn:hover .ub-icon, .upload-btn.has-files .ub-icon { background: var(--brand-mid); }
+  .ub-icon svg { width: 24px; height: 24px; stroke: var(--brand); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ub-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .ub-hint { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .ub-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--brand); color: white;
+    font-size: 11px; font-weight: 700;
+    border-radius: 20px; padding: 2px 8px;
+    display: none;
+  }
+  .upload-btn.has-files .ub-badge { display: block; }
+
+  /* ── THUMBS ── */
+  .thumbs-area {
+    margin-top: 14px;
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .thumb-item {
+    width: 72px;
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: visible;
+  }
+  .thumb-img {
+    width: 72px; height: 86px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    display: block;
+  }
+  .thumb-remove {
+    position: absolute; top: -7px; right: -7px;
+    width: 22px; height: 22px;
+    background: var(--danger);
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: white; font-size: 12px; font-weight: 700;
+    line-height: 1; box-shadow: var(--shadow-sm);
+  }
+  .thumb-name { font-size: 9px; color: var(--text3); margin-top: 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .thumb-add-btn {
+    width: 72px; height: 86px;
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius-sm);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; cursor: pointer; color: var(--brand); background: var(--brand-light);
+    font-size: 11px; font-weight: 600;
+    transition: all 0.15s;
+  }
+  .thumb-add-btn:hover { background: var(--brand-mid); }
+  .thumb-add-btn svg { width: 20px; height: 20px; stroke: var(--brand); fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+  /* ── DATE PICKER ── */
+  .date-section { margin-bottom: 20px; }
+  .date-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .date-card-head {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+  }
+  .date-card-title { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 7px; }
+  .date-card-title svg { width: 17px; height: 17px; stroke: var(--brand); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .optional-tag {
+    font-size: 11px; color: var(--text3); background: var(--bg2);
+    border-radius: 20px; padding: 3px 9px; font-weight: 500;
+  }
+  .date-input-row { display: flex; align-items: center; gap: 10px; }
+  .date-field-wrap { flex: 1; position: relative; }
+  .date-manual-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-size: 15px; font-weight: 500;
+    color: var(--text); font-family: 'Inter', sans-serif;
+    letter-spacing: 1px;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .date-manual-input::placeholder { color: var(--text3); font-weight: 400; letter-spacing: 0.5px; }
+  .date-manual-input:focus { border-color: var(--brand); background: var(--brand-light); }
+  .date-cal-btn {
+    width: 44px; height: 44px;
+    background: var(--brand-light);
+    border: 1.5px solid var(--brand-mid);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .date-cal-btn:hover { background: var(--brand-mid); }
+  .date-cal-btn svg { width: 20px; height: 20px; stroke: var(--brand); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* dropdown calendar */
+  .date-dropdown {
+    display: none;
+    margin-top: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+  .date-dropdown.open { display: block; }
+  .ddd-cols { display: grid; grid-template-columns: 1fr 1fr 1.4fr; }
+  .ddd-col { border-right: 1px solid var(--border); }
+  .ddd-col:last-child { border-right: none; }
+  .ddd-col-head {
+    padding: 8px 12px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--text3); background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .ddd-list { max-height: 200px; overflow-y: auto; }
+  .ddd-item {
+    padding: 9px 12px;
+    font-size: 14px; font-weight: 400; color: var(--text2);
+    cursor: pointer; text-align: center;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--bg2);
+  }
+  .ddd-item:last-child { border-bottom: none; }
+  .ddd-item:hover { background: var(--brand-light); color: var(--brand); }
+  .ddd-item.selected { background: var(--brand); color: white; font-weight: 600; }
+  .ddd-done {
+    padding: 10px 16px; text-align: right;
+    border-top: 1px solid var(--border); background: var(--bg);
+  }
+  .ddd-done button {
+    background: var(--brand); color: white; border: none;
+    border-radius: var(--radius-xs); padding: 7px 18px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ── PROCESS BUTTON ── */
+  .process-section { margin-bottom: 28px; }
+  .process-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+    color: white; border: none;
+    border-radius: var(--radius);
+    padding: 17px 24px;
+    font-size: 16px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.35);
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    position: relative; overflow: hidden;
+  }
+  .process-btn:hover { box-shadow: 0 6px 28px rgba(37,99,235,0.45); transform: translateY(-1px); }
+  .process-btn:active { transform: translateY(0); box-shadow: 0 2px 10px rgba(37,99,235,0.3); }
+  .process-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .process-btn svg { width: 20px; height: 20px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .spinner { width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.75s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── PROCESSING STATE ── */
+  .processing-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px 24px; text-align: center;
+    box-shadow: var(--shadow); margin-bottom: 20px; display: none;
+  }
+  .proc-icon {
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #EFF6FF, #F3E8FF);
+    border-radius: 16px; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .proc-icon svg { width: 28px; height: 28px; stroke: var(--brand); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .proc-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .proc-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+  .proc-bar-bg { background: var(--bg2); border-radius: 20px; height: 6px; overflow: hidden; }
+  .proc-bar { background: linear-gradient(90deg, var(--brand), #7C3AED); height: 100%; border-radius: 20px; width: 0%; transition: width 0.4s; }
+
+  /* ── RESULT SECTION ── */
+  .result-section { display: none; }
+  .result-header-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 16px 18px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    box-shadow: var(--shadow-sm);
+    position: sticky; top: 63px; z-index: 90;
+  }
+  .result-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .date-chip {
+    background: var(--brand-light); color: var(--brand-dark);
+    border: 1px solid var(--brand-mid);
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .date-chip svg { width: 14px; height: 14px; stroke: var(--brand); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .count-chip {
+    background: var(--bg2); color: var(--text2);
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; font-weight: 500;
+  }
+  .result-actions { display: flex; gap: 8px; }
+  .btn-sort {
+    background: var(--surface); color: var(--text);
+    border: 1.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 8px 14px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    font-family: 'Inter', sans-serif; transition: all 0.15s;
+  }
+  .btn-sort:hover { background: var(--bg2); border-color: var(--brand); color: var(--brand); }
+  .btn-sort svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn-sort.sorted { background: var(--brand-light); border-color: var(--brand); color: var(--brand); }
+  .btn-dl {
+    background: var(--brand); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 8px 16px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    font-family: 'Inter', sans-serif; transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+  }
+  .btn-dl:hover { background: var(--brand-dark); box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
+  .btn-dl svg { width: 15px; height: 15px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── TABLE ── */
+  .result-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    touch-action: pan-y pinch-zoom;
+    overflow-x: auto;
+  }
+  .result-table {
+    width: 100%; border-collapse: collapse;
+    min-width: 300px;
+  }
+  .result-table thead tr {
+    background: var(--bg);
+    border-bottom: 1.5px solid var(--border2);
+  }
+  .result-table th {
+    padding: 12px 16px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text3);
+    text-align: left;
+  }
+  .result-table th:first-child { width: 52px; text-align: center; }
+  .result-table th:last-child { text-align: right; }
+  .result-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .result-table tbody tr:last-child { border-bottom: none; }
+  .result-table tbody tr:hover { background: var(--bg); }
+  .result-table td { padding: 13px 16px; }
+  .td-idx { text-align: center; font-size: 12px; color: var(--text3); font-weight: 500; }
+  .td-no { font-size: 15px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .td-rs { text-align: right; }
+  .rs-pill {
+    display: inline-block;
+    background: var(--success-bg); color: var(--success);
+    border: 1px solid #BBF7D0;
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 13px; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .td-no-edit, .td-rs-edit {
+    outline: none;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    width: 100%;
+    cursor: text;
+  }
+  .td-no-edit { font-size: 15px; font-weight: 600; color: var(--text); }
+  .td-rs-edit { font-size: 13px; font-weight: 600; color: var(--success); text-align: right; width: 80px; }
+  .result-table td:focus-within { background: var(--brand-light); }
+
+  /* ── ERROR TOAST ── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1E293B; color: white;
+    border-radius: var(--radius-sm); padding: 12px 20px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-lg); z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    display: flex; align-items: center; gap: 8px;
+    max-width: calc(100vw - 40px);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--danger); }
+  .toast.success { background: var(--success); }
+
+  /* ── NEW SCAN BUTTON ── */
+  .new-scan-btn {
+    width: 100%; margin-top: 16px;
+    background: transparent; color: var(--text2);
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius); padding: 14px;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: 'Inter', sans-serif; transition: all 0.15s;
+  }
+  .new-scan-btn:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+  .new-scan-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── API KEY SETUP ── */
+  .api-setup {
+    background: var(--warn-bg);
+    border: 1px solid #FDE68A;
+    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px;
+    display: none;
+  }
+  .api-setup-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .api-setup-head svg { width: 17px; height: 17px; stroke: var(--warn); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .api-setup-head span { font-size: 14px; font-weight: 600; color: #92400E; }
+  .api-row { display: flex; gap: 8px; }
+  .api-input {
+    flex: 1; background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 9px 13px;
+    font-size: 13px; color: var(--text); font-family: 'Inter', sans-serif; outline: none;
+  }
+  .api-input:focus { border-color: var(--brand); }
+  .api-save-btn {
+    background: var(--brand); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 9px 16px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif; white-space: nowrap;
+  }
+  .api-hint { font-size: 11px; color: #92400E; margin-top: 7px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-result {
+    padding: 48px 24px; text-align: center;
+    display: none;
+  }
+  .empty-result svg { width: 48px; height: 48px; stroke: var(--text3); fill: none; stroke-width: 1.5; stroke-linecap: round; margin: 0 auto 14px; display: block; }
+  .empty-result p { font-size: 14px; color: var(--text2); }
+
+  /* ── CAMERA MODAL ── */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.7);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    padding: 20px; display: none;
+  }
+  .modal-bg.open { display: flex; }
+  .modal-card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 24px; width: 100%; max-width: 440px;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg2); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--text2);
+  }
+  #camera-preview {
+    width: 100%; border-radius: var(--radius-sm);
+    background: #000; display: block; max-height: 300px; object-fit: cover;
+  }
+  .camera-controls { display: flex; gap: 10px; margin-top: 14px; }
+  .cam-snap-btn {
+    flex: 1; background: var(--brand); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 12px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .cam-snap-btn svg { width: 17px; height: 17px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .cam-done-btn {
+    background: var(--bg2); color: var(--text); border: 1.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 12px 18px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .snap-count { font-size: 12px; color: var(--text2); margin-top: 10px; text-align: center; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+  /* hidden file input */
+  #file-input, #upload-input { display: none; }
+
+  @media (max-width: 480px) {
+    .topbar-inner { padding: 0 16px; }
+    .main { padding: 20px 16px 0; }
+    .upload-grid { gap: 10px; }
+    .upload-btn { padding: 20px 12px 16px; }
+    .ub-icon { width: 42px; height: 42px; border-radius: 12px; }
+    .ub-title { font-size: 13px; }
+    .result-header-bar { top: 62px; padding: 12px 14px; }
+    .result-actions { gap: 6px; }
+    .btn-sort, .btn-dl { padding: 7px 11px; font-size: 12px; }
+    .ddd-cols { grid-template-columns: 1fr 1fr 1.2fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="logo-area">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/><circle cx="19" cy="17" r="3"/><path d="M19 15v2l1 1"/></svg>
+      </div>
+      <div class="logo-text">
+        <div class="name">SaiSort</div>
+        <div class="tagline">Chit fund sheet scanner</div>
+      </div>
+    </div>
+    <div class="session-chip" id="session-chip" style="display:none;">
+      <span class="dot"></span> Data saved
+    </div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- API KEY SETUP -->
+  <div class="api-setup" id="api-setup">
+    <div class="api-setup-head">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>API key required to process images</span>
+    </div>
+    <div class="api-row">
+      <input class="api-input" type="password" id="api-key-input" placeholder="Enter your Anthropic API key (sk-ant-...)">
+      <button class="api-save-btn" onclick="saveApiKey()">Save</button>
+    </div>
+    <p class="api-hint">Your key is stored only in this browser session and never sent anywhere except Anthropic.</p>
+  </div>
+
+  <!-- STEP 1: UPLOAD -->
+  <div class="upload-section">
+    <div class="section-eyebrow"><span class="step-pill">01</span> Add your sheet</div>
+    <div class="upload-grid">
+      <div class="upload-btn" id="cam-btn" onclick="openCamera()">
+        <div class="ub-badge" id="cam-badge">0</div>
+        <div class="ub-icon">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="ub-title">Camera</div>
+        <div class="ub-hint">Take photo live<br>Tap + to add more</div>
+      </div>
+      <div class="upload-btn" id="upload-btn" onclick="document.getElementById('upload-input').click()">
+        <div class="ub-badge" id="upload-badge">0</div>
+        <div class="ub-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="ub-title">Upload images</div>
+        <div class="ub-hint">From gallery<br>Multiple files at once</div>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" capture="environment">
+    <input type="file" id="upload-input" accept="image/*" multiple>
+    <div class="thumbs-area" id="thumbs-area"></div>
+  </div>
+
+  <!-- STEP 2: DATE -->
+  <div class="date-section">
+    <div class="section-eyebrow"><span class="step-pill">02</span> Date of this sheet <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--text3);margin-left:4px;">— optional</span></div>
+    <div class="date-card">
+      <div class="date-card-head">
+        <div class="date-card-title">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Sheet date
+        </div>
+        <span class="optional-tag">Optional</span>
+      </div>
+      <div class="date-input-row">
+        <div class="date-field-wrap">
+          <input class="date-manual-input" type="text" id="date-manual" placeholder="DD / MM / YYYY" maxlength="14"
+            oninput="formatDateInput(this)" autocomplete="off" inputmode="numeric">
+        </div>
+        <div class="date-cal-btn" onclick="toggleDateDropdown()" title="Open date picker">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+      </div>
+      <div class="date-dropdown" id="date-dropdown">
+        <div class="ddd-cols">
+          <div class="ddd-col">
+            <div class="ddd-col-head">Day</div>
+            <div class="ddd-list" id="ddd-days"></div>
+          </div>
+          <div class="ddd-col">
+            <div class="ddd-col-head">Month</div>
+            <div class="ddd-list" id="ddd-months"></div>
+          </div>
+          <div class="ddd-col">
+            <div class="ddd-col-head">Year</div>
+            <div class="ddd-list" id="ddd-years"></div>
+          </div>
+        </div>
+        <div class="ddd-done"><button onclick="confirmDate()">Confirm date</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROCESS BUTTON -->
+  <div class="process-section">
+    <button class="process-btn" id="process-btn" onclick="processSheets()">
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span id="process-btn-text">Process sheet</span>
+      <div class="spinner" id="process-spinner"></div>
+    </button>
+  </div>
+
+  <!-- PROCESSING STATE -->
+  <div class="processing-card" id="processing-card">
+    <div class="proc-icon">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 7.76a6 6 0 0 0 0 8.49"/></svg>
+    </div>
+    <div class="proc-title">Reading your sheet…</div>
+    <div class="proc-sub" id="proc-sub-text">Sending to AI · extracting numbers · sorting data</div>
+    <div class="proc-bar-bg"><div class="proc-bar" id="proc-bar"></div></div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-section" id="result-section">
+    <div class="result-header-bar">
+      <div class="result-meta">
+        <div class="date-chip" id="result-date-chip" style="display:none;">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="result-date-text"></span>
+        </div>
+        <div class="count-chip"><span id="result-count">0</span> entries</div>
+      </div>
+      <div class="result-actions">
+        <button class="btn-sort" id="sort-btn" onclick="toggleSort()">
+          <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Sort
+        </button>
+        <button class="btn-dl" onclick="downloadPDF()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </button>
+      </div>
+    </div>
+    <div class="result-table-wrap">
+      <table class="result-table" id="result-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>No. (identifier)</th>
+            <th style="text-align:right;">Rs. (amount)</th>
+          </tr>
+        </thead>
+        <tbody id="result-tbody"></tbody>
+      </table>
+      <div class="empty-result" id="empty-result">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>No data could be extracted.<br>Try a clearer photo of the sheet.</p>
+      </div>
+    </div>
+    <button class="new-scan-btn" onclick="resetToUpload()">
+      <svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      New scan — clear and start over
+    </button>
+  </div>
+
+</div>
+
+<!-- CAMERA MODAL -->
+<div class="modal-bg" id="camera-modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Camera</div>
+      <button class="modal-close" onclick="closeCamera()">✕</button>
+    </div>
+    <video id="camera-preview" autoplay playsinline muted></video>
+    <canvas id="cam-canvas" style="display:none;"></canvas>
+    <div class="snap-count" id="snap-count"></div>
+    <div class="camera-controls">
+      <button class="cam-snap-btn" onclick="snapPhoto()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Snap photo
+      </button>
+      <button class="cam-done-btn" onclick="doneCamera()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let files = [];
+let resultData = [];
+let isSorted = false;
+let cameraStream = null;
+let snapCount = 0;
+let apiKey = '';
+let selectedDay = '', selectedMonth = '', selectedYear = '';
+
+// ── PERSISTENCE (sessionStorage) ──
+function saveState() {
+  try {
+    sessionStorage.setItem('saisort_data', JSON.stringify(resultData));
+    sessionStorage.setItem('saisort_date', document.getElementById('date-manual').value || '');
+    document.getElementById('session-chip').style.display = 'flex';
+  } catch(e) {}
+}
+function loadState() {
+  try {
+    const d = sessionStorage.getItem('saisort_data');
+    const date = sessionStorage.getItem('saisort_date');
+    if (d) {
+      resultData = JSON.parse(d);
+      if (resultData.length > 0) {
+        if (date) document.getElementById('date-manual').value = date;
+        showResult(false);
+        return true;
+      }
+    }
+  } catch(e) {}
+  return false;
+}
+
+// ── API KEY ──
+function checkApiKey() {
+  apiKey = sessionStorage.getItem('saisort_api') || '';
+  if (!apiKey) document.getElementById('api-setup').style.display = 'block';
+}
+function saveApiKey() {
+  const v = document.getElementById('api-key-input').value.trim();
+  if (!v.startsWith('sk-')) { showToast('Enter a valid Anthropic API key (starts with sk-)', 'error'); return; }
+  apiKey = v;
+  sessionStorage.setItem('saisort_api', v);
+  document.getElementById('api-setup').style.display = 'none';
+  showToast('API key saved', 'success');
+}
+
+// ── DATE FORMATTING ──
+function formatDateInput(el) {
+  let v = el.value.replace(/[^0-9]/g, '');
+  let out = '';
+  if (v.length >= 1) out += v.substring(0,2);
+  if (v.length >= 3) out += ' / ' + v.substring(2,4);
+  if (v.length >= 5) out += ' / ' + v.substring(4,8);
+  el.value = out;
+}
+function getDateValue() {
+  const raw = document.getElementById('date-manual').value.replace(/\s/g,'');
+  if (!raw) return '';
+  const parts = raw.split('/');
+  if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+    return `${parts[0]}/${parts[1]}/${parts[2]}`;
+  }
+  return raw;
+}
+
+// ── DATE DROPDOWN ──
+function buildDateDropdown() {
+  const days = document.getElementById('ddd-days');
+  const months = document.getElementById('ddd-months');
+  const years = document.getElementById('ddd-years');
+  days.innerHTML = '';
+  months.innerHTML = '';
+  years.innerHTML = '';
+  for (let i=1; i<=31; i++) {
+    const d = i < 10 ? '0'+i : ''+i;
+    days.innerHTML += `<div class="ddd-item${selectedDay===d?' selected':''}" onclick="selectDDDDay('${d}')">${d}</div>`;
+  }
+  for (let i=1; i<=12; i++) {
+    const m = i < 10 ? '0'+i : ''+i;
+    months.innerHTML += `<div class="ddd-item${selectedMonth===m?' selected':''}" onclick="selectDDDMonth('${m}')">${m}</div>`;
+  }
+  const yr = new Date().getFullYear();
+  for (let i=yr-2; i<=yr+1; i++) {
+    years.innerHTML += `<div class="ddd-item${selectedYear===(''+i)?' selected':''}" onclick="selectDDDYear('${i}')">${i}</div>`;
+  }
+  // scroll to selected
+  setTimeout(()=>{
+    const sel = days.querySelector('.selected');
+    if (sel) sel.scrollIntoView({block:'center'});
+    const selM = months.querySelector('.selected');
+    if (selM) selM.scrollIntoView({block:'center'});
+    const selY = years.querySelector('.selected');
+    if (selY) selY.scrollIntoView({block:'center'});
+  }, 50);
+}
+function toggleDateDropdown() {
+  const dd = document.getElementById('date-dropdown');
+  if (dd.classList.contains('open')) {
+    dd.classList.remove('open');
+  } else {
+    buildDateDropdown();
+    dd.classList.add('open');
+  }
+}
+function selectDDDDay(d) {
+  selectedDay = d;
+  document.querySelectorAll('#ddd-days .ddd-item').forEach(el=>{
+    el.classList.toggle('selected', el.textContent.trim()===d);
+  });
+}
+function selectDDDMonth(m) {
+  selectedMonth = m;
+  document.querySelectorAll('#ddd-months .ddd-item').forEach(el=>{
+    el.classList.toggle('selected', el.textContent.trim()===m);
+  });
+}
+function selectDDDYear(y) {
+  selectedYear = ''+y;
+  document.querySelectorAll('#ddd-years .ddd-item').forEach(el=>{
+    el.classList.toggle('selected', el.textContent.trim()===''+y);
+  });
+}
+function confirmDate() {
+  if (selectedDay && selectedMonth && selectedYear) {
+    document.getElementById('date-manual').value = `${selectedDay} / ${selectedMonth} / ${selectedYear}`;
+  }
+  document.getElementById('date-dropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const dc = document.getElementById('date-dropdown');
+  if (!e.target.closest('.date-card')) dc.classList.remove('open');
+});
+
+// ── FILES ──
+function updateThumbs() {
+  const area = document.getElementById('thumbs-area');
+  if (files.length === 0) { area.innerHTML = ''; return; }
+  let html = '';
+  files.forEach((f, i) => {
+    const url = URL.createObjectURL(f);
+    const shortName = f.name.length > 10 ? f.name.substring(0,10)+'…' : f.name;
+    html += `<div class="thumb-item">
+      <img class="thumb-img" src="${url}" alt="Sheet ${i+1}">
+      <div class="thumb-remove" onclick="removeFile(${i})">✕</div>
+      <div class="thumb-name">${shortName}</div>
+    </div>`;
+  });
+  html += `<div class="thumb-add-btn" onclick="document.getElementById('upload-input').click()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add more
+  </div>`;
+  area.innerHTML = html;
+  updateBadges();
+}
+function removeFile(i) {
+  files.splice(i, 1);
+  updateThumbs();
+  updateBadges();
+}
+function updateBadges() {
+  const n = files.length;
+  const cb = document.getElementById('cam-btn');
+  const ub = document.getElementById('upload-btn');
+  const cb2 = document.getElementById('cam-badge');
+  const ub2 = document.getElementById('upload-badge');
+  if (n > 0) {
+    cb2.textContent = n; cb.classList.add('has-files');
+    ub2.textContent = n; ub.classList.add('has-files');
+  } else {
+    cb.classList.remove('has-files');
+    ub.classList.remove('has-files');
+  }
+}
+document.getElementById('upload-input').addEventListener('change', function(e) {
+  Array.from(e.target.files).forEach(f => files.push(f));
+  updateThumbs();
+  this.value = '';
+});
+
+// ── CAMERA ──
+function openCamera() {
+  snapCount = 0;
+  document.getElementById('snap-count').textContent = '';
+  document.getElementById('camera-modal').classList.add('open');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(stream => {
+      cameraStream = stream;
+      document.getElementById('camera-preview').srcObject = stream;
+    })
+    .catch(err => {
+      closeCamera();
+      showToast('Camera not available — use Upload instead', 'error');
+    });
+}
+function snapPhoto() {
+  const video = document.getElementById('camera-preview');
+  const canvas = document.getElementById('cam-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    const f = new File([blob], `camera_${Date.now()}.jpg`, {type:'image/jpeg'});
+    files.push(f);
+    snapCount++;
+    document.getElementById('snap-count').textContent = `${snapCount} photo${snapCount>1?'s':''} taken — tap Done when finished`;
+    updateThumbs();
+  }, 'image/jpeg', 0.92);
+}
+function doneCamera() {
+  if (snapCount === 0) { showToast('Take at least one photo first', 'error'); return; }
+  closeCamera();
+}
+function closeCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
+  document.getElementById('camera-modal').classList.remove('open');
+}
+
+// ── PROCESS ──
+async function processSheets() {
+  if (files.length === 0) { showToast('Add at least one sheet photo first', 'error'); return; }
+  if (!apiKey) { showToast('Save your API key first (yellow box above)', 'error'); return; }
+
+  const btn = document.getElementById('process-btn');
+  const spinner = document.getElementById('process-spinner');
+  const btnText = document.getElementById('process-btn-text');
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Processing…';
+
+  document.getElementById('processing-card').style.display = 'block';
+  animateBar();
+
+  try {
+    // Convert all images to base64
+    const imageContents = await Promise.all(files.map(fileToBase64Content));
+
+    // Build prompt
+    const userContent = [
+      ...imageContents,
+      {
+        type: 'text',
+        text: `You are processing a handwritten chit fund payment sheet. The sheet has columns: No. (a 4-digit serial number) and Rs. (an amount in Indian Rupees).
+
+Extract EVERY row from the sheet. Return ONLY a JSON array, no markdown, no explanation. Format:
+[{"no": "8060", "rs": "100"}, {"no": "7929", "rs": "300"}, ...]
+
+Rules:
+- Include ALL entries visible — do not skip any
+- no = the 4-digit serial number as a string
+- rs = the rupee amount as a plain number string (no symbols)
+- If the sheet has two columns of data side by side (left group and right group), extract all of them
+- If a number is ambiguous, use your best judgment
+- Return ONLY the JSON array, nothing else`
+      }
+    ];
+
+    document.getElementById('proc-sub-text').textContent = `Reading ${files.length} image${files.length>1?'s':''} · extracting numbers`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: userContent }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(()=>({}));
+      throw new Error(err.error?.message || `API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const raw = data.content.map(c=>c.text||'').join('');
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    resultData = parsed.filter(r => r.no && r.rs);
+
+    document.getElementById('processing-card').style.display = 'none';
+    showResult(true);
+    saveState();
+
+  } catch(e) {
+    document.getElementById('processing-card').style.display = 'none';
+    showToast('Error: ' + (e.message || 'Processing failed'), 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Process sheet';
+  }
+}
+
+function animateBar() {
+  const bar = document.getElementById('proc-bar');
+  let w = 0;
+  const iv = setInterval(()=>{
+    w = Math.min(w + Math.random()*8 + 2, 88);
+    bar.style.width = w + '%';
+    if (!document.getElementById('processing-card').style.display || document.getElementById('processing-card').style.display === 'none') {
+      bar.style.width = '100%';
+      clearInterval(iv);
+    }
+  }, 300);
+}
+
+async function fileToBase64Content(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve({
+        type: 'image',
+        source: { type: 'base64', media_type: file.type || 'image/jpeg', data: base64 }
+      });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── SHOW RESULT ──
+function showResult(animate) {
+  document.getElementById('result-section').style.display = 'block';
+  if (animate) document.getElementById('result-section').scrollIntoView({behavior:'smooth', block:'start'});
+
+  const dateVal = getDateValue();
+  if (dateVal) {
+    document.getElementById('result-date-chip').style.display = 'flex';
+    document.getElementById('result-date-text').textContent = dateVal;
+  } else {
+    document.getElementById('result-date-chip').style.display = 'none';
+  }
+
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('result-tbody');
+  const empty = document.getElementById('empty-result');
+  document.getElementById('result-count').textContent = resultData.length;
+
+  if (resultData.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = resultData.map((r,i) => `
+    <tr>
+      <td class="td-idx">${i+1}</td>
+      <td class="td-no">
+        <input class="td-no-edit" type="text" value="${escapeHtml(r.no)}"
+          onchange="resultData[${i}].no=this.value;saveState()" inputmode="numeric">
+      </td>
+      <td class="td-rs">
+        <div style="display:flex;justify-content:flex-end;align-items:center;">
+          <span class="rs-pill">
+            <input class="td-rs-edit" type="text" value="${escapeHtml(r.rs)}"
+              onchange="resultData[${i}].rs=this.value;saveState()" inputmode="numeric" style="background:transparent;color:var(--success);border:none;outline:none;font-family:inherit;font-size:13px;font-weight:600;width:70px;text-align:right;">
+          </span>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── SORT ──
+function toggleSort() {
+  isSorted = !isSorted;
+  if (isSorted) {
+    resultData.sort((a,b) => parseInt(a.no)||0 - parseInt(b.no)||0);
+    document.getElementById('sort-btn').classList.add('sorted');
+    document.getElementById('sort-btn').innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"/></svg> Sorted ↑`;
+  } else {
+    document.getElementById('sort-btn').classList.remove('sorted');
+    document.getElementById('sort-btn').innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Sort`;
+  }
+  renderTable();
+  saveState();
+}
+
+// ── PDF DOWNLOAD ──
+function downloadPDF() {
+  if (resultData.length === 0) { showToast('No data to download', 'error'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+
+  const dateVal = getDateValue();
+  const pageW = doc.internal.pageSize.getWidth();
+
+  // Header background
+  doc.setFillColor(37, 99, 235);
+  doc.rect(0, 0, pageW, 28, 'F');
+
+  // App name
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(18);
+  doc.setTextColor(255,255,255);
+  doc.text('SaiSort', 14, 13);
+
+  // Tagline
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(191, 219, 254);
+  doc.text('Chit Fund Sheet Scanner', 14, 19);
+
+  // Date
+  if (dateVal) {
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(255,255,255);
+    doc.text('Date: ' + dateVal, pageW - 14, 13, {align:'right'});
+  }
+
+  // Generated
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.setTextColor(191, 219, 254);
+  const now = new Date();
+  doc.text('Generated: ' + now.toLocaleDateString('en-IN') + ' ' + now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}), pageW-14, 19, {align:'right'});
+
+  // Total entries
+  doc.setFontSize(9);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`${resultData.length} entries${isSorted?' · sorted by No. ascending':''}`, 14, 34);
+
+  // Table
+  doc.autoTable({
+    startY: 38,
+    head: [['#', 'No. (Identifier)', 'Rs. (Amount)']],
+    body: resultData.map((r,i) => [i+1, r.no, r.rs]),
+    styles: {
+      font: 'helvetica', fontSize: 10, cellPadding: 4,
+      overflow: 'linebreak', valign: 'middle',
+      lineColor: [226, 232, 240], lineWidth: 0.3
+    },
+    headStyles: {
+      fillColor: [15, 23, 42], textColor: [255,255,255],
+      fontStyle: 'bold', fontSize: 9, halign: 'left'
+    },
+    columnStyles: {
+      0: { cellWidth: 16, halign: 'center', textColor:[148,163,184] },
+      1: { cellWidth: 55, fontStyle:'bold', textColor:[15,23,42] },
+      2: { cellWidth: 55, halign:'right', textColor:[22,163,74], fontStyle:'bold' }
+    },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    tableWidth: 'auto',
+    margin: { left: 14, right: 14 },
+    didDrawPage: function(data) {
+      // Footer on each page
+      const pg = doc.internal.getCurrentPageInfo().pageNumber;
+      const total = doc.internal.getNumberOfPages();
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      doc.setTextColor(148,163,184);
+      doc.text(`SaiSort · Page ${pg} of ${total}`, pageW/2, doc.internal.pageSize.getHeight()-8, {align:'center'});
+      doc.text('Read-only export', 14, doc.internal.pageSize.getHeight()-8);
+    }
+  });
+
+  const fname = dateVal
+    ? `SaiSort_${dateVal.replace(/\//g,'-')}.pdf`
+    : `SaiSort_${now.toLocaleDateString('en-IN').replace(/\//g,'-')}.pdf`;
+  doc.save(fname);
+  showToast('PDF downloaded', 'success');
+}
+
+// ── RESET ──
+function resetToUpload() {
+  if (resultData.length > 0) {
+    if (!confirm('Clear all processed data and start a new scan?')) return;
+  }
+  files = [];
+  resultData = [];
+  isSorted = false;
+  document.getElementById('date-manual').value = '';
+  document.getElementById('thumbs-area').innerHTML = '';
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('processing-card').style.display = 'none';
+  document.getElementById('session-chip').style.display = 'none';
+  document.getElementById('result-tbody').innerHTML = '';
+  document.getElementById('sort-btn').classList.remove('sorted');
+  document.getElementById('sort-btn').innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Sort`;
+  updateBadges();
+  sessionStorage.removeItem('saisort_data');
+  sessionStorage.removeItem('saisort_date');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── TOAST ──
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' '+type : '');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  checkApiKey();
+  loadState();
+});
+
+// Close camera on outside click
+document.getElementById('camera-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeCamera();
+});
+</script>
+</body>
+</html>

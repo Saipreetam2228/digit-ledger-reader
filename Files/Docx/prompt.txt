@@ -1,0 +1,131 @@
+# MASTER PROMPT: Consolidate Daily Serial Number Collection Files into a Single Analytics Excel Report
+
+## Objective
+You will receive multiple text files. Each file represents collection data for a specific date.
+Your task is to analyze all files and generate one consolidated Excel report that merges the data intelligently.
+
+## Input Format
+Each file belongs to a particular date.
+The file name or metadata will indicate the date associated with that file.
+
+Supported formats:
+1251:1500
+1792:2400
+
+or
+
+1251 1500
+1792 2400
+
+Both formats should be interpreted as:
+Serial Number → Amount
+
+## Important Rules
+
+1. Serial Number is the Primary Key
+- Treat Serial Number as the primary identifier.
+- Merge data from all files based on serial numbers.
+
+2. Dates Become Columns
+- Every unique date becomes a separate column.
+- Dates must appear in chronological order.
+
+3. Serial Numbers Become Rows
+- Every unique serial number found across all files must appear exactly once.
+- Sort serial numbers in ascending order.
+- Include alphanumeric serial numbers (e.g., 1857A).
+
+4. Handle Missing Entries
+- If a serial number does not exist for a particular date, leave that cell blank.
+
+## Handling Duplicate Serial Numbers Within the Same File
+
+A serial number may occur more than once within the same day's file.
+This is valid and must not be removed or summed.
+
+Store all amounts belonging to the same serial number and same date within the same cell.
+Separate them using commas.
+
+Example:
+1251 → 1500, 1000
+1792 → 2000, 1200
+
+## Example Input
+
+Date: 1-5-24
+1251:1500
+1251:1000
+1792:2400
+1857:3750
+1907:500
+
+Date: 2-5-24
+1251:100
+1792:2000
+1792:1200
+1857:3000
+1857A:3000
+1907:5000
+
+Date: 4-5-24
+1486:100
+1792:2000
+1857:3000
+1900:50
+1907:5000
+2050:4500
+
+## Expected Final Output Structure
+
+Serial No. | 1-5-24 | 2-5-24 | 4-5-24
+1251 | 1500,1000 | 100 |
+1486 | | | 100
+1792 | 2400 | 2000,1200 | 2000
+1857 | 3750 | 3000 | 3000
+1857A | | 3000 |
+1900 | | | 50
+1907 | 500 | 5000 | 5000
+2050 | | | 4500
+
+## Excel Output Requirements
+
+Generate an Excel (.xlsx) file.
+
+Requirements:
+- Header row should contain Serial Number and Dates.
+- Freeze the header row so dates remain visible during vertical scrolling.
+- Freeze the Serial Number column so it remains visible during horizontal scrolling.
+- Preserve duplicate entries exactly as they appeared.
+- Do not aggregate or sum duplicate amounts.
+- Leave missing entries blank.
+
+## Processing Instructions
+
+1. Read all provided text files.
+2. Determine the date associated with each file.
+3. Extract all serial number–amount pairs.
+4. Standardize both supported input formats.
+5. Collect every unique serial number.
+6. Collect every unique date.
+7. Create a consolidated matrix:
+   - Rows → Serial Numbers
+   - Columns → Dates
+8. Preserve duplicate amounts within the same date using commas.
+9. Leave cells blank when data is absent.
+10. Sort dates chronologically.
+11. Sort serial numbers ascending, including alphanumeric values.
+12. Export the final result as an Excel workbook with freeze panes enabled.
+
+## Final Deliverables
+
+Generate:
+1. Excel (.xlsx) file containing the consolidated report.
+2. Summary including:
+   - Total files processed
+   - Total unique serial numbers found
+   - Total dates processed
+   - Any malformed entries detected
+
+Important:
+Never modify original amounts, sum duplicates, or discard repeated serial numbers.
+Preserve raw transactional information while organizing it into a single analytical view.

@@ -1,0 +1,16 @@
+hey i want to develop a web app, which will work like ;
+when we enter into the page, the uiux should be neat and simple attractive and easy for every people who uses it ok, so there will be a button which says that 
+CAMERA - once we click on this camera button, we can take the picture of that sheet which has the content like this [u can see it in the image as(sample.jpeg)] and also in that camera button it self , we must keep an option like (add more)so it will work like, once we click on this camera button , we will see the button to click a photo , so once we click the photo it should ask like conform or add("+")button so that multiple images can be taken in that field.
+beside the camera button, we will keep a button called ("UPLOAD") So, this upload button will work like , we can upload the images from our gallery ok
+
+so totally we will be having two major and clear buttons [CAMERA ,UPLOAD IMAGES] Which works like camera will take live photographs as one pic by conforming at one pic, or can take multiple images by clicking the add option , understood.
+       Like that through the upload option we can upload one or       	multiple files at once through this button ; go it
+2. so coming to the next files , till here we have discussed the procedure where how to upload the file in different ways ok.
+now our next step is to enter the date /select from the calender . so this will be like , once we upload the file , below that there will be a enter date field (optional)for the users to enter , so this date should not be like ok; whatever the user enter ex: (5 11 26)  so the field will be like [ / / ] empty spaces so if he enters in the first space there will be a drop box of dates till the end , like wise if he clicks on the second space (months ) will be dropped down, like wise (years) as drop down bar to select the particular date ok;
+or once we select the date box all [date/month/year] should drop down at once in three columns so , that he can select all at once ok. this should be saved until the process completes ok.
+which means this date will be assigned for that particular file , if we dont enter then its fine , no date will be seen.
+so the work assigned to this date was , once the output is processed, the date which we have entered should be shown on the top of the output so that we will know the which date this file belongs to, and the output should be like till we scroll down the date should always be seen like the code box ok ; and also the output should be having the capability to zoom in and zoom out manually [no (+, -) buttons]ok.
+and also his date should appear when we download this exported processed file ; so that with the date which we have entered will be save to that file once we download it ok .
+so coming to the next phase now.
+
+3. so we have come till entering the date, fine 

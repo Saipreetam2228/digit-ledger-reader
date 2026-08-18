@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
+<title>SaiSort — Chit Fund Sheet Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#2563EB;--brand-dark:#1D4ED8;--brand-light:#EFF6FF;--brand-mid:#BFDBFE;
+  --surface:#FFFFFF;--surface-2:#F8FAFC;--surface-3:#F1F5F9;
+  --border:#E2E8F0;--border-strong:#CBD5E1;
+  --text-1:#0F172A;--text-2:#475569;--text-3:#94A3B8;
+  --success:#059669;--success-bg:#ECFDF5;
+  --error:#DC2626;--error-bg:#FEF2F2;
+  --warning:#D97706;--warning-bg:#FFFBEB;
+  --radius:14px;--radius-sm:9px;--radius-xs:6px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 4px 16px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.13),0 4px 12px rgba(0,0,0,.06);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:#EEF2FF;color:var(--text-1);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 12px rgba(0,0,0,.07)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo-mark{width:38px;height:38px;background:linear-gradient(135deg,#2563EB 0%,#7C3AED 100%);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(37,99,235,.35)}
+.logo-mark svg{width:20px;height:20px;fill:none;stroke:white;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.logo-text{font-family:'Sora',sans-serif;font-size:19px;font-weight:700;color:var(--text-1);letter-spacing:-.4px}
+.logo-text span{color:var(--brand)}
+.logo-tagline{font-size:10.5px;color:var(--text-3);margin-top:1px}
+.topbar-badge{background:linear-gradient(135deg,#EFF6FF,#F5F3FF);color:var(--brand);font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid var(--brand-mid);letter-spacing:.3px}
+
+/* PAGE */
+.page{max-width:500px;margin:0 auto;padding:22px 15px 70px}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1E40AF 0%,#5B21B6 100%);border-radius:20px;padding:28px 24px 24px;margin-bottom:18px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(37,99,235,.3)}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,.06);border-radius:50%}
+.hero::after{content:'';position:absolute;bottom:-60px;left:40%;width:220px;height:220px;background:rgba(255,255,255,.04);border-radius:50%}
+.hero-eyebrow{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.hero-title{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;color:white;line-height:1.2;margin-bottom:8px}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.68);line-height:1.55;max-width:340px}
+.hero-steps{display:flex;gap:8px;margin-top:20px}
+.hero-step{flex:1;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 8px;text-align:center;font-size:10px;color:rgba(255,255,255,.8);font-weight:500;line-height:1.4}
+.hero-step-num{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;color:white;display:block;margin-bottom:3px}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow-sm);margin-bottom:14px;overflow:hidden}
+.card-header{padding:16px 18px 0;display:flex;align-items:center;gap:11px;margin-bottom:15px}
+.card-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--brand-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--brand-mid)}
+.card-icon svg{width:17px;height:17px;stroke:var(--brand);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card-title{font-size:14px;font-weight:600;color:var(--text-1)}
+.card-sub{font-size:11.5px;color:var(--text-3);margin-top:1px}
+.card-body{padding:0 18px 18px}
+
+/* UPLOAD */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.upload-btn{border:2px dashed var(--border-strong);border-radius:var(--radius);padding:22px 12px;background:var(--surface-2);cursor:pointer;text-align:center;transition:all .18s ease;display:flex;flex-direction:column;align-items:center;gap:9px;-webkit-tap-highlight-color:transparent}
+.upload-btn:hover,.upload-btn:active{border-color:var(--brand);background:var(--brand-light)}
+.upload-btn-icon{width:46px;height:46px;background:white;border-radius:13px;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+.upload-btn-icon svg{width:23px;height:23px;stroke:var(--brand);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.upload-btn-title{font-size:13px;font-weight:600;color:var(--text-1)}
+.upload-btn-hint{font-size:11px;color:var(--text-3);line-height:1.45}
+
+/* PREVIEWS */
+.previews{display:flex;flex-wrap:wrap;gap:9px;margin-top:15px}
+.preview-item{width:66px;position:relative;display:flex;flex-direction:column;align-items:center;gap:4px}
+.preview-thumb-box{width:66px;height:74px;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--surface-3);display:flex;align-items:center;justify-content:center}
+.preview-thumb-box img{width:100%;height:100%;object-fit:cover}
+.preview-name{font-size:9px;color:var(--text-3);text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;width:66px}
+.preview-remove{position:absolute;top:-5px;right:-5px;width:19px;height:19px;background:var(--error);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;cursor:pointer;color:white;font-size:11px;font-weight:700;line-height:1}
+#fileInput,#cameraInput{display:none}
+
+/* DATE */
+.date-field{display:flex;align-items:center;gap:8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;background:var(--surface);transition:border-color .15s}
+.date-field:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.date-field-icon{width:16px;height:16px;flex-shrink:0}
+.date-field-icon svg{width:16px;height:16px;stroke:var(--text-3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.date-inputs{display:flex;align-items:center;flex:1}
+.date-part{border:none;outline:none;background:transparent;font-family:'Inter',sans-serif;font-size:15px;font-weight:500;color:var(--text-1);text-align:center;padding:0 2px}
+.date-part::placeholder{color:var(--text-3);font-weight:400}
+.date-part-dd{width:34px}
+.date-part-mm{width:34px}
+.date-part-yy{width:52px}
+.date-sep{color:var(--text-3);font-size:15px;font-weight:500;padding:0 2px;user-select:none}
+.date-cal-btn{background:var(--brand-light);border:1px solid var(--brand-mid);border-radius:var(--radius-xs);padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--brand);white-space:nowrap;transition:background .15s;flex-shrink:0}
+.date-cal-btn:hover{background:var(--brand-mid)}
+.date-cal-btn svg{width:13px;height:13px;stroke:var(--brand);fill:none;stroke-width:2;stroke-linecap:round}
+.date-optional-badge{display:inline-flex;align-items:center;background:var(--surface-3);color:var(--text-3);font-size:10px;font-weight:500;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle}
+
+/* CALENDAR */
+.cal-dropdown{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:16px;margin-top:10px;position:relative;z-index:50;animation:fadeIn .15s ease}
+.cal-dropdown.open{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.cal-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.cal-col-title{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;text-align:center;margin-bottom:6px}
+.cal-scroll{max-height:155px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)}
+.cal-scroll::-webkit-scrollbar{width:3px}
+.cal-scroll::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px}
+.cal-opt{padding:8px 10px;font-size:13px;cursor:pointer;text-align:center;color:var(--text-1);transition:background .1s;border-bottom:1px solid var(--border)}
+.cal-opt:last-child{border-bottom:none}
+.cal-opt:hover{background:var(--brand-light);color:var(--brand)}
+.cal-opt.selected{background:var(--brand);color:white;font-weight:600}
+.cal-done-btn{margin-top:12px;width:100%;background:var(--brand);color:white;border:none;border-radius:var(--radius-sm);padding:11px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.cal-done-btn:hover{background:var(--brand-dark)}
+
+/* PROCESS BTN */
+.process-wrap{padding:0 0 14px}
+.process-btn{width:100%;background:linear-gradient(135deg,#2563EB 0%,#7C3AED 100%);color:white;border:none;border-radius:var(--radius);padding:17px;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity .15s,transform .1s;letter-spacing:.2px;box-shadow:0 4px 18px rgba(37,99,235,.38)}
+.process-btn:hover{opacity:.93}
+.process-btn:active{transform:scale(.98)}
+.process-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.process-btn svg{width:20px;height:20px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* LOADING */
+.loading-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--brand-mid);padding:36px 24px;text-align:center;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.spinner{width:46px;height:46px;border:3px solid var(--brand-mid);border-top-color:var(--brand);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-title{font-size:15px;font-weight:600;color:var(--text-1);margin-bottom:5px}
+.loading-sub{font-size:13px;color:var(--text-3)}
+.loading-steps{margin-top:18px;display:flex;flex-direction:column;gap:9px;text-align:left}
+.loading-step{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-3)}
+.loading-step.active{color:var(--brand);font-weight:500}
+.loading-step.done{color:var(--success)}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s}
+.loading-step.active .step-dot{background:var(--brand);animation:pulse 1s ease-in-out infinite}
+.loading-step.done .step-dot{background:var(--success)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
+
+/* RESULT */
+.result-section{display:none}
+.result-section.visible{display:block}
+.result-topbar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;box-shadow:var(--shadow-sm);gap:10px;flex-wrap:wrap}
+.result-info{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.result-date-pill{background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border:1px solid var(--brand-mid);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--brand);display:flex;align-items:center;gap:5px}
+.result-date-pill svg{width:13px;height:13px;stroke:var(--brand);fill:none;stroke-width:2;stroke-linecap:round}
+.result-count-pill{background:var(--success-bg);border:1px solid #A7F3D0;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--success)}
+.result-actions{display:flex;gap:7px}
+.btn-sort,.btn-dl{border-radius:var(--radius-sm);padding:8px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;border:none;-webkit-tap-highlight-color:transparent}
+.btn-sort{background:var(--surface-3);color:var(--text-1);border:1px solid var(--border-strong)}
+.btn-sort:hover{background:var(--border)}
+.btn-sort svg,.btn-dl svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.btn-dl{background:linear-gradient(135deg,#2563EB,#7C3AED);color:white;box-shadow:0 2px 8px rgba(37,99,235,.28)}
+.btn-dl:hover{opacity:.9}
+
+/* STICKY DATE */
+.table-sticky-date{position:sticky;top:62px;background:linear-gradient(135deg,#2563EB,#7C3AED);padding:8px 18px;font-size:12px;font-weight:600;color:white;display:none;z-index:80;letter-spacing:.3px;align-items:center;gap:6px}
+.table-sticky-date.show{display:flex}
+.table-sticky-date svg{width:13px;height:13px;stroke:rgba(255,255,255,.8);fill:none;stroke-width:2;stroke-linecap:round}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface-2);border-bottom:2px solid var(--border)}
+thead th{padding:11px 14px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;text-align:left}
+thead th:last-child{text-align:right}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td{padding:11px 14px;font-size:14px;color:var(--text-1)}
+td:last-child{text-align:right}
+td.td-idx{font-size:11px;color:var(--text-3);font-weight:500;width:36px}
+td.td-no{font-weight:600;font-variant-numeric:tabular-nums}
+td.td-rs{font-variant-numeric:tabular-nums}
+.amount-chip{display:inline-block;background:var(--success-bg);color:var(--success);border:1px solid #A7F3D0;border-radius:6px;padding:3px 10px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+td[contenteditable="true"]{outline:none}
+td[contenteditable="true"]:focus{background:#FEFCE8;box-shadow:inset 0 0 0 2px #FDE68A}
+.edit-hint{padding:10px 16px;background:var(--warning-bg);border-top:1px solid #FDE68A;font-size:11px;color:var(--warning);display:flex;align-items:center;gap:6px}
+.edit-hint svg{width:13px;height:13px;stroke:var(--warning);fill:none;stroke-width:2;flex-shrink:0}
+
+/* ERROR */
+.error-card{background:var(--error-bg);border:1px solid #FECACA;border-radius:var(--radius);padding:15px 17px;display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.error-card svg{width:18px;height:18px;stroke:var(--error);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px}
+.error-card-text{font-size:13px;color:var(--error);font-weight:500;line-height:1.55}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1E293B;color:white;padding:12px 20px;border-radius:24px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast svg{width:16px;height:16px;stroke:#4ADE80;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* EMPTY */
+.empty-state{padding:48px 24px;text-align:center}
+.empty-icon{width:64px;height:64px;background:var(--brand-light);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:1px solid var(--brand-mid)}
+.empty-icon svg{width:30px;height:30px;stroke:var(--brand);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.empty-title{font-size:15px;font-weight:600;color:var(--text-2);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--text-3);line-height:1.6;max-width:260px;margin:0 auto}
+
+/* CAMERA MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+#cameraVideo{width:100%;max-width:460px;border-radius:var(--radius);background:black;max-height:58vh;object-fit:cover}
+.camera-controls{display:flex;gap:18px;margin-top:20px;align-items:center}
+.cam-btn{border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .1s;-webkit-tap-highlight-color:transparent}
+.cam-btn:active{transform:scale(.93)}
+.cam-snap{width:70px;height:70px;background:white;box-shadow:0 0 0 5px rgba(255,255,255,.25)}
+.cam-snap svg{width:30px;height:30px;stroke:var(--brand);fill:none;stroke-width:2;stroke-linecap:round}
+.cam-close{width:46px;height:46px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25)}
+.cam-close svg{width:20px;height:20px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round}
+.cam-add{width:46px;height:46px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25)}
+.cam-add svg{width:22px;height:22px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round}
+.cam-label{color:rgba(255,255,255,.55);font-size:10.5px;text-align:center;margin-top:4px}
+.cam-count-badge{position:absolute;top:-4px;right:-4px;background:var(--brand);color:white;font-size:10px;font-weight:700;width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,.6)}
+.cam-btn-wrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px}
+canvas#snapCanvas{display:none}
+.cam-done-btn{margin-top:14px;background:linear-gradient(135deg,#2563EB,#7C3AED);color:white;border:none;border-radius:24px;padding:13px 36px;font-size:14px;font-weight:600;cursor:pointer;display:none;box-shadow:0 4px 16px rgba(37,99,235,.4)}
+.cam-done-btn.show{display:block}
+
+/* NEW SCAN */
+.new-scan-btn{width:100%;background:var(--surface-3);color:var(--text-2);border:1.5px dashed var(--border-strong);border-radius:var(--radius);padding:14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;transition:all .15s}
+.new-scan-btn:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-light)}
+.new-scan-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+@media(max-width:400px){
+  .page{padding:14px 11px 70px}
+  .hero{padding:22px 18px 20px}
+  .hero-title{font-size:21px}
+  .btn-sort,.btn-dl{padding:8px 10px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">Sai<span>Sort</span></div>
+      <div class="logo-tagline">Chit fund sheet scanner</div>
+    </div>
+  </div>
+  <div class="topbar-badge">v1.0</div>
+</div>
+
+<!-- CAMERA MODAL -->
+<div class="modal-overlay" id="cameraModal">
+  <video id="cameraVideo" autoplay playsinline></video>
+  <canvas id="snapCanvas"></canvas>
+  <div class="camera-controls">
+    <div class="cam-btn-wrap">
+      <button class="cam-btn cam-close" onclick="closeCamera()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <span class="cam-label">Close</span>
+    </div>
+    <div class="cam-btn-wrap">
+      <button class="cam-btn cam-snap" onclick="snapPhoto()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M20.94 13A9 9 0 1 1 11 3.06"/></svg>
+      </button>
+      <span class="cam-label">Capture</span>
+    </div>
+    <div class="cam-btn-wrap" style="position:relative;">
+      <button class="cam-btn cam-add" id="camAddBtn" onclick="snapAndAdd()" style="display:none;">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <span class="cam-label" id="camAddLabel"></span>
+      <span class="cam-count-badge" id="camCount" style="display:none;">0</span>
+    </div>
+  </div>
+  <button class="cam-done-btn" id="camDoneBtn" onclick="cameraDone()">✓ Use these photos</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toastMsg">Done</span>
+</div>
+
+<!-- STICKY DATE -->
+<div class="table-sticky-date" id="stickyDate">
+  <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  <span id="stickyDateText"></span>
+</div>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">Chit Fund Tool</div>
+    <div class="hero-title">Scan. Sort. Done.</div>
+    <div class="hero-sub">Take a photo of your chit fund sheet — SaiSort reads every entry and sorts it by serial number instantly.</div>
+    <div class="hero-steps">
+      <div class="hero-step"><span class="hero-step-num">1</span>Add sheet</div>
+      <div class="hero-step"><span class="hero-step-num">2</span>Set date</div>
+      <div class="hero-step"><span class="hero-step-num">3</span>Process</div>
+      <div class="hero-step"><span class="hero-step-num">4</span>Download</div>
+    </div>
+  </div>
+
+  <!-- UPLOAD CARD -->
+  <div class="card" id="uploadCard">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div>
+        <div class="card-title">Step 1 — Add sheet images</div>
+        <div class="card-sub">Camera or gallery · one or many at once</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="upload-grid">
+        <div class="upload-btn" onclick="openCamera()">
+          <div class="upload-btn-icon">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <div class="upload-btn-title">Camera</div>
+          <div class="upload-btn-hint">Live photo<br/>+ add more</div>
+        </div>
+        <div class="upload-btn" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-btn-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div class="upload-btn-title">Upload images</div>
+          <div class="upload-btn-hint">Pick from gallery<br/>multiple ok</div>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFiles(this.files)"/>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment"/>
+      <div class="previews" id="previews"></div>
+    </div>
+  </div>
+
+  <!-- DATE CARD -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div>
+        <div class="card-title">Step 2 — Sheet date <span class="date-optional-badge">optional</span></div>
+        <div class="card-sub">Appears on output and downloaded PDF</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="date-field">
+        <div class="date-field-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="date-inputs">
+          <input class="date-part date-part-dd" id="dateDD" type="text" maxlength="2" placeholder="DD" inputmode="numeric" oninput="autoTabDate(this,'dateMM',2)"/>
+          <span class="date-sep">/</span>
+          <input class="date-part date-part-mm" id="dateMM" type="text" maxlength="2" placeholder="MM" inputmode="numeric" oninput="autoTabDate(this,'dateYY',2)"/>
+          <span class="date-sep">/</span>
+          <input class="date-part date-part-yy" id="dateYY" type="text" maxlength="4" placeholder="YYYY" inputmode="numeric"/>
+        </div>
+        <button class="date-cal-btn" onclick="toggleCalendar()">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+          Pick
+        </button>
+      </div>
+      <div class="cal-dropdown" id="calDropdown">
+        <div class="cal-cols">
+          <div>
+            <div class="cal-col-title">Day</div>
+            <div class="cal-scroll" id="calDays"></div>
+          </div>
+          <div>
+            <div class="cal-col-title">Month</div>
+            <div class="cal-scroll" id="calMonths"></div>
+          </div>
+          <div>
+            <div class="cal-col-title">Year</div>
+            <div class="cal-scroll" id="calYears"></div>
+          </div>
+        </div>
+        <button class="cal-done-btn" onclick="applyCalendar()">Confirm date</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROCESS BTN -->
+  <div class="process-wrap">
+    <button class="process-btn" id="processBtn" onclick="processImages()" disabled>
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Process sheet
+    </button>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-card" id="errorCard" style="display:none;">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div class="error-card-text" id="errorText">Something went wrong.</div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loadingCard" style="display:none;">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div class="loading-title">Reading your sheet…</div>
+      <div class="loading-sub">AI is scanning every number</div>
+      <div class="loading-steps">
+        <div class="loading-step" id="ls1"><div class="step-dot"></div>Uploading image to AI scanner</div>
+        <div class="loading-step" id="ls2"><div class="step-dot"></div>Reading handwritten entries</div>
+        <div class="loading-step" id="ls3"><div class="step-dot"></div>Extracting No. and Rs. pairs</div>
+        <div class="loading-step" id="ls4"><div class="step-dot"></div>Building your sorted table</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-section" id="resultSection">
+    <div class="result-topbar">
+      <div class="result-info">
+        <div class="result-date-pill" id="resultDatePill" style="display:none;">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="resultDateText"></span>
+        </div>
+        <div class="result-count-pill" id="resultCountPill">0 entries</div>
+      </div>
+      <div class="result-actions">
+        <button class="btn-sort" onclick="toggleSort()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          <span id="sortBtnText">Sort A→Z</span>
+        </button>
+        <button class="btn-dl" onclick="downloadPDF()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px;">#</th>
+            <th>No.</th>
+            <th style="text-align:right;">Rs.</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+      <div class="edit-hint">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Tap any cell to correct a value before downloading
+      </div>
+    </div>
+
+    <button class="new-scan-btn" onclick="newScan()">
+      <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+      Start new scan
+    </button>
+  </div>
+
+  <!-- EMPTY -->
+  <div id="emptyState" style="display:none;">
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="empty-title">No entries found</div>
+        <div class="empty-sub">The image may be too blurry. Try again with better lighting and a steady hand.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .page -->
+
+<script>
+const GEMINI_KEY = 'AIzaSyDsL0mxL2yLWlc11wjg6q3hDJELT-Wn6Kk';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+
+let uploadedFiles = [];
+let processedData = [];
+let isSorted = false;
+let cameraStream = null;
+let cameraPhotos = [];
+
+// ── PERSIST ──
+function saveState() {
+  try {
+    localStorage.setItem('ss_data', JSON.stringify(processedData));
+    localStorage.setItem('ss_date', getDateString());
+    localStorage.setItem('ss_sorted', isSorted);
+  } catch(e) {}
+}
+function loadState() {
+  try {
+    const d = localStorage.getItem('ss_data');
+    const date = localStorage.getItem('ss_date');
+    const sorted = localStorage.getItem('ss_sorted');
+    if (d) {
+      processedData = JSON.parse(d);
+      if (processedData.length > 0) {
+        isSorted = sorted === 'true';
+        if (date) setDateFromString(date);
+        renderTable(isSorted ? [...processedData].sort((a,b)=>a.no-b.no) : processedData);
+        showResult();
+      }
+    }
+  } catch(e) {}
+}
+
+// ── DATE ──
+function getDateString() {
+  const dd = document.getElementById('dateDD').value.trim();
+  const mm = document.getElementById('dateMM').value.trim();
+  const yy = document.getElementById('dateYY').value.trim();
+  if (dd && mm && yy) return `${dd}/${mm}/${yy}`;
+  return '';
+}
+function setDateFromString(s) {
+  const parts = s.split('/');
+  if (parts.length === 3) {
+    document.getElementById('dateDD').value = parts[0];
+    document.getElementById('dateMM').value = parts[1];
+    document.getElementById('dateYY').value = parts[2];
+  }
+}
+function autoTabDate(el, nextId, maxLen) {
+  el.value = el.value.replace(/\D/g,'');
+  if (el.value.length >= maxLen) document.getElementById(nextId).focus();
+}
+
+// ── CALENDAR ──
+function buildCalendar() {
+  const curDD = document.getElementById('dateDD').value;
+  const curMM = document.getElementById('dateMM').value;
+  const curYY = document.getElementById('dateYY').value;
+  const curYear = new Date().getFullYear();
+
+  ['calDays','calMonths','calYears'].forEach(id => document.getElementById(id).innerHTML = '');
+
+  for (let i = 1; i <= 31; i++) {
+    const v = String(i).padStart(2,'0');
+    const d = document.createElement('div');
+    d.className = 'cal-opt' + (v === curDD.padStart(2,'0') ? ' selected' : '');
+    d.textContent = v;
+    d.onclick = function(){ document.querySelectorAll('#calDays .cal-opt').forEach(x=>x.classList.remove('selected')); this.classList.add('selected'); };
+    document.getElementById('calDays').appendChild(d);
+  }
+  for (let i = 1; i <= 12; i++) {
+    const v = String(i).padStart(2,'0');
+    const d = document.createElement('div');
+    d.className = 'cal-opt' + (v === curMM.padStart(2,'0') ? ' selected' : '');
+    d.textContent = v;
+    d.onclick = function(){ document.querySelectorAll('#calMonths .cal-opt').forEach(x=>x.classList.remove('selected')); this.classList.add('selected'); };
+    document.getElementById('calMonths').appendChild(d);
+  }
+  for (let y = curYear - 3; y <= curYear + 2; y++) {
+    const d = document.createElement('div');
+    d.className = 'cal-opt' + (String(y) === curYY ? ' selected' : '');
+    d.textContent = y;
+    d.onclick = function(){ document.querySelectorAll('#calYears .cal-opt').forEach(x=>x.classList.remove('selected')); this.classList.add('selected'); };
+    document.getElementById('calYears').appendChild(d);
+    if (String(y) === curYY || (!curYY && y === curYear)) {
+      setTimeout(() => d.scrollIntoView({block:'nearest'}), 60);
+    }
+  }
+}
+function toggleCalendar() {
+  const cal = document.getElementById('calDropdown');
+  cal.classList.contains('open') ? cal.classList.remove('open') : (buildCalendar(), cal.classList.add('open'));
+}
+function applyCalendar() {
+  const dd = document.querySelector('#calDays .cal-opt.selected');
+  const mm = document.querySelector('#calMonths .cal-opt.selected');
+  const yy = document.querySelector('#calYears .cal-opt.selected');
+  if (dd) document.getElementById('dateDD').value = dd.textContent;
+  if (mm) document.getElementById('dateMM').value = mm.textContent;
+  if (yy) document.getElementById('dateYY').value = yy.textContent;
+  document.getElementById('calDropdown').classList.remove('open');
+}
+
+// ── FILES ──
+function handleFiles(files) {
+  for (const f of files) uploadedFiles.push(f);
+  renderPreviews();
+  updateProcessBtn();
+}
+function renderPreviews() {
+  const el = document.getElementById('previews');
+  el.innerHTML = '';
+  uploadedFiles.forEach((f, i) => {
+    const url = URL.createObjectURL(f);
+    const item = document.createElement('div');
+    item.className = 'preview-item';
+    item.innerHTML = `<div class="preview-thumb-box"><img src="${url}" alt="sheet"/></div><div class="preview-name">${f.name||'photo_'+(i+1)}</div><div class="preview-remove" onclick="removeFile(${i})">×</div>`;
+    el.appendChild(item);
+  });
+}
+function removeFile(i) {
+  uploadedFiles.splice(i,1);
+  renderPreviews();
+  updateProcessBtn();
+}
+function updateProcessBtn() {
+  document.getElementById('processBtn').disabled = uploadedFiles.length === 0;
+}
+
+// ── CAMERA ──
+async function openCamera() {
+  cameraPhotos = [];
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    document.getElementById('cameraVideo').srcObject = cameraStream;
+    document.getElementById('cameraModal').classList.add('open');
+    document.getElementById('camAddBtn').style.display = 'none';
+    document.getElementById('camAddLabel').textContent = '';
+    document.getElementById('camDoneBtn').classList.remove('show');
+    document.getElementById('camCount').style.display = 'none';
+  } catch(e) {
+    showToast('Camera unavailable — use Upload instead');
+  }
+}
+function snapPhoto() {
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('snapCanvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0);
+  canvas.toBlob(blob => {
+    const file = new File([blob], `photo_${Date.now()}.jpg`, {type:'image/jpeg'});
+    cameraPhotos.push(file);
+    uploadedFiles.push(file);
+    const c = document.getElementById('camCount');
+    c.textContent = cameraPhotos.length;
+    c.style.display = 'flex';
+    document.getElementById('camAddBtn').style.display = 'flex';
+    document.getElementById('camAddLabel').textContent = 'Add more';
+    document.getElementById('camDoneBtn').classList.add('show');
+    showToast('Photo captured — tap + for more or Done');
+  }, 'image/jpeg', 0.93);
+}
+function snapAndAdd() { snapPhoto(); }
+function cameraDone() { closeCamera(); renderPreviews(); updateProcessBtn(); }
+function closeCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
+  document.getElementById('cameraModal').classList.remove('open');
+}
+
+// ── PROCESS ──
+async function fileToBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+function setLoadingStep(step) {
+  for (let i=1;i<=4;i++) {
+    const el = document.getElementById('ls'+i);
+    el.classList.remove('active','done');
+    if (i<step) el.classList.add('done');
+    else if (i===step) el.classList.add('active');
+  }
+}
+
+async function processImages() {
+  hideError();
+  document.getElementById('resultSection').classList.remove('visible');
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('loadingCard').style.display='block';
+  document.getElementById('processBtn').disabled=true;
+  setLoadingStep(1);
+
+  try {
+    const allEntries = [];
+    for (let fi=0; fi<uploadedFiles.length; fi++) {
+      const file = uploadedFiles[fi];
+      setLoadingStep(2);
+      const b64 = await fileToBase64(file);
+      setLoadingStep(3);
+
+      const prompt = `You are scanning a handwritten chit fund payment sheet. It has columns: No. (a 4-digit serial/ID number) and Rs. (rupee amount). There may be TWO side-by-side column sets (left: No. Rs. | right: No. Rs.).
+
+Extract ALL No.–Rs. pairs visible. Return ONLY a raw JSON array with no markdown, no explanation, no extra text:
+[{"no":8060,"rs":100},{"no":7929,"rs":300}]
+
+Rules:
+- Read BOTH left and right columns if present
+- Ignore any totals row at the bottom
+- Make your best guess for unclear digits
+- Return only the JSON array, nothing else`;
+
+      const resp = await fetch(GEMINI_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          contents:[{parts:[
+            {text:prompt},
+            {inline_data:{mime_type:file.type||'image/jpeg',data:b64}}
+          ]}],
+          generationConfig:{temperature:0.1,maxOutputTokens:4096}
+        })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error?.message || 'API error '+resp.status);
+      }
+
+      const data = await resp.json();
+      let raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+      raw = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+      const s = raw.indexOf('['), e = raw.lastIndexOf(']');
+      if (s!==-1 && e!==-1) raw = raw.substring(s,e+1);
+      const parsed = JSON.parse(raw);
+      allEntries.push(...parsed);
+    }
+
+    setLoadingStep(4);
+    await new Promise(r=>setTimeout(r,400));
+
+    processedData = allEntries.map(e=>({
+      no: parseInt(String(e.no).replace(/\D/g,'')),
+      rs: parseInt(String(e.rs).replace(/\D/g,''))
+    })).filter(e=>!isNaN(e.no)&&!isNaN(e.rs));
+
+    document.getElementById('loadingCard').style.display='none';
+
+    if (processedData.length===0) {
+      document.getElementById('emptyState').style.display='block';
+    } else {
+      isSorted=false;
+      renderTable(processedData);
+      showResult();
+      saveState();
+      showToast('✓ '+processedData.length+' entries extracted!');
+    }
+  } catch(e) {
+    document.getElementById('loadingCard').style.display='none';
+    showError('Processing failed: '+e.message+'. Check your internet connection and try again.');
+    document.getElementById('processBtn').disabled=false;
+  }
+}
+
+// ── RENDER TABLE ──
+function renderTable(data) {
+  const tbody = document.getElementById('resultBody');
+  tbody.innerHTML='';
+  data.forEach((row,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML=`<td class="td-idx">${i+1}</td><td class="td-no" contenteditable="true" spellcheck="false">${row.no}</td><td class="td-rs"><span class="amount-chip" contenteditable="true" spellcheck="false">${row.rs}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function showResult() {
+  const dateStr = getDateString();
+  const datePill = document.getElementById('resultDatePill');
+  if (dateStr) {
+    document.getElementById('resultDateText').textContent = dateStr;
+    document.getElementById('stickyDateText').textContent = 'Sheet date: '+dateStr;
+    datePill.style.display='flex';
+    document.getElementById('stickyDate').classList.add('show');
+  } else {
+    datePill.style.display='none';
+    document.getElementById('stickyDate').classList.remove('show');
+  }
+  document.getElementById('resultCountPill').textContent = processedData.length+' entries';
+  document.getElementById('resultSection').classList.add('visible');
+  document.getElementById('sortBtnText').textContent = isSorted ? 'Original' : 'Sort A→Z';
+}
+
+// ── SORT ──
+function toggleSort() {
+  if (!isSorted) {
+    renderTable([...processedData].sort((a,b)=>a.no-b.no));
+    document.getElementById('sortBtnText').textContent='Original';
+    isSorted=true;
+  } else {
+    renderTable(processedData);
+    document.getElementById('sortBtnText').textContent='Sort A→Z';
+    isSorted=false;
+  }
+  saveState();
+}
+
+// ── PDF DOWNLOAD ──
+function downloadPDF() {
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'mm',format:'a4'});
+  const dateStr = getDateString();
+  const W = 210, M = 16;
+
+  // Header bar
+  doc.setFillColor(37,99,235);
+  doc.rect(0,0,W,22,'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.setTextColor(255,255,255);
+  doc.text('SaiSort',M,14);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.setTextColor(180,210,255);
+  doc.text('Chit Fund Sheet Scanner',M,19.5);
+
+  if (dateStr) {
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(11);
+    doc.setTextColor(255,255,255);
+    doc.text('Date: '+dateStr, W-M, 14, {align:'right'});
+  }
+
+  // Sub header
+  doc.setFillColor(248,250,252);
+  doc.rect(0,22,W,10,'F');
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(100,116,139);
+  doc.text('Total entries: '+processedData.length,M,28.5);
+  doc.text('Generated by SaiSort · '+new Date().toLocaleDateString('en-IN'), W-M, 28.5, {align:'right'});
+
+  // Table data from current rendered table (captures edits)
+  const tbody = document.getElementById('resultBody');
+  const rows = tbody.querySelectorAll('tr');
+  const tableData = [];
+  rows.forEach((tr,i)=>{
+    const cells = tr.querySelectorAll('td');
+    const noVal = cells[1]?.textContent?.trim()||'';
+    const rsEl = cells[2]?.querySelector('.amount-chip');
+    const rsVal = rsEl ? rsEl.textContent.trim() : (cells[2]?.textContent?.trim()||'');
+    tableData.push([String(i+1), noVal, rsVal]);
+  });
+
+  doc.autoTable({
+    startY: 36,
+    head:[['#','No. (Identifier)','Rs. (Amount)']],
+    body: tableData,
+    margin:{left:M,right:M},
+    styles:{font:'helvetica',fontSize:10.5,cellPadding:{top:4.5,right:7,bottom:4.5,left:7},overflow:'linebreak',lineColor:[226,232,240],lineWidth:0.3},
+    headStyles:{fillColor:[37,99,235],textColor:255,fontStyle:'bold',fontSize:9.5,cellPadding:{top:5,right:7,bottom:5,left:7}},
+    alternateRowStyles:{fillColor:[248,250,252]},
+    columnStyles:{
+      0:{cellWidth:16,halign:'center',textColor:[148,163,184],fontSize:9},
+      1:{cellWidth:80,fontStyle:'bold',textColor:[15,23,42]},
+      2:{halign:'right',textColor:[5,150,105],fontStyle:'bold'}
+    },
+    didDrawPage:(d)=>{
+      const total = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(148,163,184);
+      doc.text('SaiSort  ·  Page '+d.pageNumber+' of '+total, W/2, 291, {align:'center'});
+      if (dateStr) doc.text('Sheet Date: '+dateStr, W-M, 291, {align:'right'});
+    }
+  });
+
+  const filename = dateStr ? 'SaiSort_'+dateStr.replace(/\//g,'-')+'.pdf' : 'SaiSort_sheet.pdf';
+  doc.save(filename);
+  showToast('PDF saved!');
+}
+
+// ── NEW SCAN ──
+function newScan() {
+  uploadedFiles=[]; processedData=[]; isSorted=false; cameraPhotos=[];
+  renderPreviews(); updateProcessBtn();
+  document.getElementById('resultSection').classList.remove('visible');
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('processBtn').disabled=true;
+  document.getElementById('stickyDate').classList.remove('show');
+  ['dateDD','dateMM','dateYY'].forEach(id=>document.getElementById(id).value='');
+  try{localStorage.removeItem('ss_data');localStorage.removeItem('ss_date');localStorage.removeItem('ss_sorted');}catch(e){}
+  window.scrollTo({top:0,behavior:'smooth'});
+  showToast('Ready for new scan');
+}
+
+// ── UTILS ──
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+function showError(msg) {
+  document.getElementById('errorText').textContent=msg;
+  document.getElementById('errorCard').style.display='flex';
+}
+function hideError() { document.getElementById('errorCard').style.display='none'; }
+
+// Close calendar on outside click
+document.addEventListener('click', e=>{
+  const cal=document.getElementById('calDropdown');
+  const field=document.querySelector('.date-field');
+  if(cal.classList.contains('open')&&!cal.contains(e.target)&&!field.contains(e.target)) cal.classList.remove('open');
+});
+
+window.addEventListener('load', loadState);
+</script>
+</body>
+</html>
